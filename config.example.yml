@@ -1,0 +1,12 @@
+endpoint: localhost:9000
+secure: false
+accessKey: minio
+secretKey: "************"
+
+destinations:
+  - bucket: uploads
+    name: uploads # optional
+    prefix: "" # optional
+    template: "" # optional
+  - bucket: temp
+  - bucket: pessoal
