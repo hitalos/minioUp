@@ -1,6 +1,6 @@
 # Minio Uploader
 
-CLI to upload files to Minio.
+CLI to upload files to [Minio](https://min.io/) (AWS S3 compatible self-hosted service).
 
 ## Installing
 
