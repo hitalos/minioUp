@@ -11,6 +11,11 @@ clean:
 
 CONTAINER_RUNTINE=$(shell [ -e /usr/bin/podman ] && echo podman || echo docker)
 minio-server:
+	@echo "Creating minio volumes if not exists…"
+	$(CONTAINER_RUNTINE) volume create --ignore minio-data
+	@echo "Creating a ssh key on volume…"
+	$(eval DATADIR=$(shell $(CONTAINER_RUNTINE) volume inspect minio-data | grep Mountpoint | sed -e 's/^.*: //g' -e 's/[\b",]//g'))
+	ssh-keygen -f $(DATADIR)/id_rsa -N '' -t rsa
 	$(CONTAINER_RUNTINE) run -d \
 		--name minio \
 		-v minio-data:/data \
@@ -18,7 +23,7 @@ minio-server:
 		-p 9001:9001 \
 		-p 9022:9022 \
 		-e MINIO_ROOT_USER=minio \
-		-e MINIO_ROOT_PASSWORD='y0n53}W@}kx&6oDGl3' \
+		-e MINIO_ROOT_PASSWORD='minio-root-password' \
 		docker.io/minio/minio server /data --console-address ":9001" --sftp="address=:9022" --sftp="ssh-private-key=/data/id_rsa"
 
 .PHONY: all clean dist/minioUp install minio-server
