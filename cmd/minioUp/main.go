@@ -40,14 +40,20 @@ func main() {
 		fmt.Println("No destination(s) configured")
 		os.Exit(1)
 	}
-	cfg.Dest = cfg.Destinations[0]
+
+	dest := cfg.Destinations[0]
 
 	if isTerminal(os.Stdin) {
 		destIdx := chooseDestination(cfg.Destinations)
 		if destIdx >= uint8(len(cfg.Destinations)) {
 			os.Exit(0)
 		}
-		cfg.Dest = cfg.Destinations[destIdx]
+		dest = cfg.Destinations[destIdx]
+	}
+
+	if err := minioClient.Init(cfg); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	if !*onlyListing {
@@ -56,14 +62,14 @@ func main() {
 			os.Exit(1)
 		}
 
-		upload(cfg)
+		upload(dest)
 		return
 	}
 
-	list(cfg)
+	list(dest)
 }
 
-func upload(cfg config.Config) {
+func upload(dest config.Destination) {
 	if len(flag.Args())%2 != 0 {
 		fmt.Println(`Provide an even number of arguments: <file1> "<param 1>"`)
 		os.Exit(1)
@@ -85,7 +91,7 @@ func upload(cfg config.Config) {
 	}
 
 	fmt.Println("Uploading files…")
-	if err := minioClient.Upload(cfg, filepaths, params); err != nil {
+	if err := minioClient.UploadMultiple(dest, filepaths, params); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -93,11 +99,17 @@ func upload(cfg config.Config) {
 	fmt.Println("Done!")
 }
 
-func list(cfg config.Config) {
+func list(dest config.Destination) {
 	fmt.Println("Listing bucket/prefix content…")
-	if err := minioClient.List(cfg); err != nil {
+
+	list, err := minioClient.List(dest)
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	for _, obj := range list {
+		fmt.Printf("%s\t%d\n", obj.Key[len(dest.Prefix)+1:], obj.Size)
 	}
 }
 

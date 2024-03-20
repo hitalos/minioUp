@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"mime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,39 +18,54 @@ import (
 	"github.com/hitalos/minioUp/config"
 )
 
-func Upload(cfg config.Config, filepaths []string, params [][]string) error {
-	client, err := New(cfg)
-	if err != nil {
-		return err
-	}
+var client *minio.Client
 
+func Init(cfg config.Config) error {
+	var err error
+
+	creds := credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, "")
+	client, err = minio.New(cfg.Endpoint, &minio.Options{Secure: cfg.Secure, Creds: creds})
+
+	return err
+}
+
+func UploadMultiple(dest config.Destination, filepaths []string, params [][]string) error {
 	for idx, file := range filepaths {
-		originalFilename := filepath.Base(file)
-
-		options := minio.PutObjectOptions{
-			UserMetadata: map[string]string{"originalFilename": originalFilename},
-		}
-		if strings.Join(params[idx], "|") != "" {
-			options.UserMetadata["params"] = strings.Join(params[idx], "|")
-		}
-
-		tmpl := cfg.Dest.Template
-		bucket := cfg.Dest.Bucket
-		filename := mountName(tmpl, append([]string{originalFilename}, params[idx]...))
-		path := filepath.Join(cfg.Dest.Prefix, filename)
-		_, err = client.FPutObject(context.Background(), bucket, path, file, options)
+		f, err := os.Open(filepath.Clean(file))
 		if err != nil {
 			return err
 		}
+
+		if err = Upload(dest, f, file, params[idx]); err != nil {
+			return err
+		}
+		_ = f.Close()
 	}
 
 	return nil
 }
 
-func New(cfg config.Config) (*minio.Client, error) {
-	creds := credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, "")
+func Upload(dest config.Destination, r io.Reader, filename string, params []string) error {
+	originalFilename := filepath.Base(filename)
 
-	return minio.New(cfg.Endpoint, &minio.Options{Secure: cfg.Secure, Creds: creds})
+	options := minio.PutObjectOptions{
+		UserMetadata: map[string]string{"originalFilename": originalFilename},
+		ContentType:  mime.TypeByExtension(filepath.Ext(filename)),
+	}
+
+	if strings.Join(params, "|") != "" {
+		options.UserMetadata["params"] = strings.Join(params, "|")
+	}
+
+	path := filepath.Join(dest.Prefix, originalFilename)
+	if dest.Template != nil {
+		tmpl := dest.Template.Model
+		path = filepath.Join(dest.Prefix, mountName(tmpl, append([]string{originalFilename}, params...)))
+	}
+
+	_, err := client.PutObject(context.Background(), dest.Bucket, path, r, -1, options)
+
+	return err
 }
 
 func mountName(templateString string, params []string) string {
@@ -71,21 +88,17 @@ func mountName(templateString string, params []string) string {
 	return str.String()
 }
 
-func List(cfg config.Config) error {
-	client, err := New(cfg)
-	if err != nil {
-		return err
+func List(dest config.Destination) ([]minio.ObjectInfo, error) {
+	if _, err := client.BucketExists(context.Background(), dest.Bucket); err != nil {
+		return nil, err
 	}
 
-	if _, err := client.BucketExists(context.Background(), cfg.Dest.Bucket); err != nil {
-		return err
-	}
-
-	opts := minio.ListObjectsOptions{Prefix: cfg.Dest.Prefix, Recursive: true}
-	objCh := client.ListObjects(context.Background(), cfg.Dest.Bucket, opts)
+	opts := minio.ListObjectsOptions{Prefix: dest.Prefix, Recursive: true}
+	objCh := client.ListObjects(context.Background(), dest.Bucket, opts)
+	list := make([]minio.ObjectInfo, 0)
 	for obj := range objCh {
-		fmt.Println(obj.Key[len(cfg.Dest.Prefix)+1:])
+		list = append(list, obj)
 	}
 
-	return nil
+	return list, nil
 }
