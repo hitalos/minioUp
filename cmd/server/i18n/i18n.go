@@ -24,6 +24,7 @@ func init() {
 	f, err := locales.Open("locales/" + defaultLocale + ".json")
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	defer f.Close()
 

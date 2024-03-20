@@ -65,6 +65,15 @@ input[type=file] {
 	margin-top: 1rem;
 }
 
+form.upload {
+	margin-bottom: 2rem;
+}
+
+form.upload label {
+	display: block;
+	margin-top: 2rem;
+}
+
 form.upload input {
 	border 2px;
 }
@@ -134,14 +143,14 @@ table td:last-child {
 }
 
 
-@media screen and (min-width: 600px) {
+@media screen and (min-width: 640px) {
 	main form.upload {
 		float: left;
 		margin-right: 1rem;
 	}
 
 	main table {
-		float: right;
+		float: auto;
 		width: auto;
 	}
 }
