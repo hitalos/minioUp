@@ -1,0 +1,16 @@
+{{ template "header.html" . }}
+
+<main>
+	<form class="index" action="/form" method="POST">
+		<select name="destination" id="destination" required>
+			<option></option>
+			{{ range $idx, $dest:= .Destinations }}
+			<option value="{{ $idx }}">{{ $dest.Name }}</option>
+			{{ end }}
+		</select>
+
+		<button type="submit">Choose</button>
+	</form>
+</main>
+
+{{ template "footer.html" . }}

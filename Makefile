@@ -1,7 +1,13 @@
-all: dist/minioUp
+all: dist/minioUp dist/minioUpServer
 
 dist/minioUp:
 	CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUp ./cmd/minioUp
+
+dist/minioUpServer:
+	CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
+
+dev:
+	go run -tags dev ./cmd/server
 
 install:
 	go install ./cmd/minioUp
@@ -26,4 +32,12 @@ minio-server:
 		-e MINIO_ROOT_PASSWORD='minio-root-password' \
 		docker.io/minio/minio server /data --console-address ":9001" --sftp="address=:9022" --sftp="ssh-private-key=/data/id_rsa"
 
-.PHONY: all clean dist/minioUp install minio-server
+lint:
+	golangci-lint run ./...
+
+sec:
+	gosec ./...
+	trivy fs .
+	grype . --add-cpes-if-none
+
+.PHONY: all clean dist/minioUp dist/minioUpServer install lint sec

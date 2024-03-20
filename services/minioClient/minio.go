@@ -102,3 +102,7 @@ func List(dest config.Destination) ([]minio.ObjectInfo, error) {
 
 	return list, nil
 }
+
+func Delete(dest config.Destination, key string) error {
+	return client.RemoveObject(context.Background(), dest.Bucket, filepath.Join(dest.Prefix, key), minio.RemoveObjectOptions{})
+}

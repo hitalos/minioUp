@@ -1,0 +1,147 @@
+html,
+body {
+	font-family: sans-serif;
+	margin: 0;
+	min-height: 100vh;
+}
+
+h1,
+p {
+	margin: 0;
+}
+
+a {
+	text-decoration: none;
+}
+
+h2 {
+	margin: 0 0 1rem 0;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+}
+
+header {
+	background-color: lightgray;
+	margin-bottom: 1rem;
+	padding: 1rem;
+}
+
+main {
+	flex: 1;
+	margin: auto;
+	min-width: 320px;
+	padding: 1rem;
+}
+
+footer {
+	background-color: navy;
+	color: white;
+	padding: 1rem;
+	text-align: right;
+}
+
+form.index {
+	margin: 1rem 0;
+}
+
+select {
+	width: 100%;
+}
+
+form input,
+form button,
+form span.btn {
+	border: 1px solid navy;
+	border-radius: .25rem;
+	margin: auto;
+	padding: .5rem 1rem;
+}
+
+input[type=file] {
+	border: 0;
+	margin-top: 1rem;
+}
+
+form.upload input {
+	border 2px;
+}
+
+form.upload input:invalid {
+	border: 2px solid red;
+}
+
+form.actions button {
+	background-color: none;
+	border: none;
+	padding: .5rem;
+}
+
+button,
+span.btn {
+	color: white;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+button[type=submit] {
+	background-color: #0082ac;
+	cursor: pointer;
+	display: block;
+	font-size: 1.5rem;
+	margin-top: 2rem;
+}
+
+button:hover,
+button:focus,
+span.btn:hover,
+span.btn:focus {
+	background-color: #2ecbff;
+}
+
+.btn.delete {
+	background-color: #f9d0d0;
+}
+
+.btn.delete:hover {
+	background-color: #600707;
+}
+
+table {
+	border: 1px solid silver;
+	border-collapse: collapse;
+	font-size: small;
+	padding: .5rem;
+	width: 100%;
+}
+
+table thead {
+	background-color: silver;
+}
+
+table tr td,
+table tr th {
+	border: 1px solid silver;
+	border-collapse: collapse;
+	padding: .25rem;
+}
+
+table td:last-child {
+	cursor: pointer;
+	text-align: center;
+}
+
+
+@media screen and (min-width: 600px) {
+	main form.upload {
+		float: left;
+		margin-right: 1rem;
+	}
+
+	main table {
+		float: right;
+		width: auto;
+	}
+}
