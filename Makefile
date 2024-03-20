@@ -7,7 +7,7 @@ dist/minioUpServer:
 	CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
 
 dev:
-	go run -tags dev ./cmd/server
+	go run -tags dev -ldflags '-X github.com/hitalos/minioUp/cmd/server/i18n.defaultLocale=pt_BR.UTF-8' ./cmd/server
 
 install:
 	go install ./cmd/minioUp

@@ -17,16 +17,16 @@
 				{{ end -}}
 			{{ end -}}
 		{{ end -}}
-		<button type="submit">Upload</button>
+		<button type="submit">{{ i18n "Upload" }}</button>
 	</form>
 	{{ with .List }}
 	<table>
-		<caption>Current files</caption>
+		<caption>{{ i18n "Current files" }}</caption>
 		<thead>
 			<tr>
-				<th>Filename</th>
-				<th>Size</th>
-				<th>Actions</th>
+				<th>{{ i18n "Filename" }}</th>
+				<th>{{ i18n "Size" }}</th>
+				<th>{{ i18n "Actions"}}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -36,7 +36,7 @@
 					<td>{{ humanize .Size }}</td>
 					<td>
 						<form class="actions" method="POST" action="/delete/{{ $.DestinationIdx }}/{{ .Name }}">
-							<button class="btn delete" title="Delete">❌</button>
+							<button class="btn delete" title="{{ i18n "Delete" }}">❌</button>
 						</form>
 					</td>
 				</tr>

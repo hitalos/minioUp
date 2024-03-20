@@ -3,10 +3,13 @@ package templates
 import (
 	"fmt"
 	"html/template"
+
+	"github.com/hitalos/minioUp/cmd/server/i18n"
 )
 
 var funcs = template.FuncMap{
 	"humanize": HumanizeBytes,
+	"i18n":     i18n.Translate,
 }
 
 func HumanizeBytes(b int64) string {
