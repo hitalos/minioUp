@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/hitalos/minioUp/cmd/server/public"
 	"github.com/hitalos/minioUp/cmd/server/templates"
 	"github.com/hitalos/minioUp/config"
@@ -48,16 +49,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	http.HandleFunc("/", index(cfg))
-	http.HandleFunc("POST /form", showUploadForm(cfg))
-	http.HandleFunc("POST /upload", processUploadForm(cfg))
-	http.HandleFunc("POST /delete/{destIdx}/{filename}", delete(cfg))
+	r := chi.NewMux()
+	r.Route("/", func(r chi.Router) {
+		r.Get("/", index(cfg))
+		r.Post("/form", showUploadForm(cfg))
+		r.Post("/upload", processUploadForm(cfg))
+		r.Post("/delete/{destIdx}/{filename}", delete(cfg))
 
-	http.Handle("/assets/", public.Handler)
+		r.Handle("/*", public.Handler)
+	})
 
 	s := http.Server{
 		Addr:         ":8000",
-		Handler:      http.DefaultServeMux,
+		Handler:      r,
 		IdleTimeout:  time.Second * 30,
 		ReadTimeout:  time.Second * 30,
 		WriteTimeout: time.Second * 30,

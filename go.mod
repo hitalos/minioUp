@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/nexidian/gocliselect v1.0.0
 	gopkg.in/yaml.v3 v3.0.1
