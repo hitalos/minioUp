@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/hitalos/minioUp/cmd/server/handlers"
+	"github.com/hitalos/minioUp/cmd/server/i18n"
 	"github.com/hitalos/minioUp/cmd/server/public"
 	"github.com/hitalos/minioUp/config"
 	"github.com/hitalos/minioUp/services/minioClient"
@@ -39,6 +40,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	i18n.LoadTranslations()
 
 	if err := minioClient.Init(cfg); err != nil {
 		fmt.Println(err)

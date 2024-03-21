@@ -3,27 +3,15 @@
 package i18n
 
 import (
-	"encoding/json"
-	"log"
 	"os"
 )
 
 var (
-	defaultLocale = "en"
+	locales = os.DirFS("cmd/server/i18n")
 )
 
-var translations = map[string]string{}
-
 func Translate(text string) string {
-	f, err := os.Open("cmd/server/i18n/locales/" + defaultLocale + ".json")
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	if err := json.NewDecoder(f).Decode(&translations); err != nil {
-		log.Println(err)
-	}
+	LoadTranslations()
 
 	t, ok := translations[text]
 	if !ok || t == "" {

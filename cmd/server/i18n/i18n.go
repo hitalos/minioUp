@@ -1,9 +1,6 @@
-//go:build !dev
-
 package i18n
 
 import (
-	"embed"
 	"encoding/json"
 	"log"
 	"os"
@@ -11,12 +8,10 @@ import (
 
 var (
 	defaultLocale = "en"
-
-	//go:embed locales/*.json
-	locales embed.FS
+	translations  = map[string]string{}
 )
 
-func init() {
+func LoadTranslations() {
 	if lang, ok := os.LookupEnv("LANG"); ok {
 		defaultLocale = lang
 	}
@@ -31,15 +26,4 @@ func init() {
 	if err := json.NewDecoder(f).Decode(&translations); err != nil {
 		log.Println(err)
 	}
-}
-
-var translations = map[string]string{}
-
-func Translate(text string) string {
-	t, ok := translations[text]
-	if ok {
-		return t
-	}
-
-	return text
 }
