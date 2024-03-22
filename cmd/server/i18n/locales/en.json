@@ -1,10 +1,11 @@
 {
 	"Actions": "Actions",
 	"Choose a destination": "Choose a destination",
-	"Current files": "Current files",
 	"Delete": "Delete",
 	"Developed by": "Developed by",
 	"Filename": "Filename",
+	"Last Mod.": "Last Mod.",
+	"Latest modifiled files": "Latest modifiled files",
 	"Size": "Size",
 	"Upload": "Upload"
 }

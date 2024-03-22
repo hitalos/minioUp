@@ -1,10 +1,11 @@
 {
 	"Actions": "Ações",
 	"Choose a destination": "Escolha um destino",
-	"Current files": "Arquivos atualmente carregados",
 	"Delete": "Excluir",
 	"Developed by": "Desenvolvido por",
 	"Filename": "Nome do arquivo",
+	"Last Mod.": "Última modificação",
+	"Latest modifiled files": "Arquivos modificados mais recentemente",
 	"Size": "Tamanho",
 	"Upload": "Enviar"
 }

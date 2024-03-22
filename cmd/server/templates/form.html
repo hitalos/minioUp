@@ -21,11 +21,12 @@
 	</form>
 	{{ with .List }}
 	<table>
-		<caption>{{ i18n "Current files" }}</caption>
+		<caption>{{ i18n "Latest modifiled files" }}</caption>
 		<thead>
 			<tr>
 				<th>{{ i18n "Filename" }}</th>
 				<th>{{ i18n "Size" }}</th>
+				<th>{{ i18n "Last Mod." }}</th>
 				<th>{{ i18n "Actions"}}</th>
 			</tr>
 		</thead>
@@ -34,6 +35,7 @@
 				<tr>
 					<td>{{ .Name }}</td>
 					<td>{{ humanize .Size }}</td>
+					<td>{{ .LastMod.Format "02-01-2006 15:04:05" }}</td>
 					<td>
 						<form class="actions" method="POST" action="/delete/{{ $.DestinationIdx }}/{{ .Name }}">
 							<button class="btn delete" title="{{ i18n "Delete" }}">❌</button>
