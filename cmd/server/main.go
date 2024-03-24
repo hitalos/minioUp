@@ -14,6 +14,7 @@ import (
 	"github.com/hitalos/minioUp/cmd/server/i18n"
 	"github.com/hitalos/minioUp/cmd/server/middlewares"
 	"github.com/hitalos/minioUp/cmd/server/public"
+	"github.com/hitalos/minioUp/cmd/server/templates"
 	"github.com/hitalos/minioUp/config"
 	"github.com/hitalos/minioUp/services/minioClient"
 )

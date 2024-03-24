@@ -5,14 +5,13 @@
 	<form action="{{ urlPrefix }}/upload" method="POST" enctype="multipart/form-data" class="upload">
 		<input type="hidden" name="destination" value="{{ .DestinationIdx }}">
 		{{ with .Destination -}}
-				<input type="file" name="file" id="file" accept=".{{ .AllowedTypes | join ", ." }}" required>
+			<input type="file" name="file" id="file" accept=".{{ .AllowedTypes | join ", ." }}" required>
 			{{ with .Template }}
 				{{ if ne .Description "" }}
 					{{ with .Description }}<label for="params">{{ . }}</label>{{ end }}
 					<input type="text" name="params" id="params" required
 						{{- with .Regex }} pattern="{{ . }}"{{ end -}}
 						{{- with .Example }} placeholder="{{ . }}"{{ end -}}
-						{{- with .Model }} title="Template: {{ . }}"{{ end -}}
 					>
 				{{ end -}}
 			{{ end -}}
