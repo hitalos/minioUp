@@ -38,7 +38,7 @@ func Index(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if len(cfg.Destinations) > 1 {
 			if err := templates.Exec(w, "index.html", cfg); err != nil {
-				fmt.Println(err)
+				ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
 			}
 			return
 		}
@@ -51,8 +51,7 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		destIdx, err := strconv.Atoi(r.PostFormValue("destination"))
 		if err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusBadRequest)
+			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
 			return
 		}
 		dest := cfg.Destinations[destIdx]
@@ -69,8 +68,7 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 
 		list, err := minioClient.List(dest)
 		if err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			ErrorHandler("Error getting file list", err, w, http.StatusInternalServerError)
 			return
 		}
 
@@ -82,7 +80,7 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 		d.List = d.List[0:min(MAX_RESULT_LEN, len(d.List))]
 
 		if err := templates.Exec(w, "form.html", d); err != nil {
-			fmt.Println(err)
+			ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
 		}
 	}
 }
@@ -91,27 +89,23 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		destIdx, err := strconv.Atoi(r.PostFormValue("destination"))
 		if err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusBadRequest)
+			ErrorHandler("Error parsing form", err, w, http.StatusBadRequest)
 			return
 		}
 
 		if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusUnprocessableEntity)
+			ErrorHandler("Error parsing uploaded file", err, w, http.StatusUnprocessableEntity)
 			return
 		}
 		f, fh, err := r.FormFile("file")
 		if err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusBadRequest)
+			ErrorHandler("Error getting uploaded file", err, w, http.StatusBadRequest)
 			return
 		}
 		defer f.Close()
 
 		if err := minioClient.Upload(cfg.Destinations[destIdx], f, fh.Filename, strings.Split(r.PostFormValue("params"), " ")); err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
 		}
 
@@ -124,19 +118,33 @@ func Delete(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		destIdx, err := strconv.Atoi(r.PathValue("destIdx"))
 		if err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusBadRequest)
+			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
 			return
 		}
 
 		filename := r.PathValue("filename")
 		if err := minioClient.Delete(cfg.Destinations[destIdx], filename); err != nil {
-			slog.Error("", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			ErrorHandler("Error deleting file", err, w, http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Location", "/")
 		w.WriteHeader(http.StatusSeeOther)
+	}
+}
+
+func ErrorHandler(msg string, err error, w http.ResponseWriter, status int) {
+	slog.Error(msg, err)
+	w.WriteHeader(status)
+
+	if err := templates.Exec(w, "error.html", msg); err != nil {
+		slog.Error("Error executing template", err)
+	}
+}
+
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	if err := templates.Exec(w, "error.html", "Not found"); err != nil {
+		slog.Error("Error executing template", err)
 	}
 }

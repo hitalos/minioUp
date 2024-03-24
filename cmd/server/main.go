@@ -49,13 +49,15 @@ func main() {
 	}
 
 	r := chi.NewMux()
+	r.NotFound(handlers.NotFoundHandler)
+
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", handlers.Index(cfg))
 		r.Post("/form", handlers.ShowUploadForm(cfg))
 		r.Post("/upload", handlers.ProcessUploadForm(cfg))
 		r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
 
-		r.Handle("/*", public.Handler)
+		r.Handle("/assets/*", public.Handler)
 	})
 
 	s := http.Server{

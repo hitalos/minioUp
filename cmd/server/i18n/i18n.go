@@ -2,7 +2,7 @@ package i18n
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 )
 
@@ -18,12 +18,12 @@ func LoadTranslations() {
 
 	f, err := locales.Open("locales/" + defaultLocale + ".json")
 	if err != nil {
-		log.Println(err)
+		slog.Error("error reading translations", err)
 		return
 	}
 	defer f.Close()
 
 	if err := json.NewDecoder(f).Decode(&translations); err != nil {
-		log.Println(err)
+		slog.Error("error decoding translations", err)
 	}
 }
