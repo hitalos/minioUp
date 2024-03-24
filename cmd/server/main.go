@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"github.com/hitalos/minioUp/cmd/server/handlers"
 	"github.com/hitalos/minioUp/cmd/server/i18n"
 	"github.com/hitalos/minioUp/cmd/server/middlewares"
@@ -52,6 +54,9 @@ func main() {
 	}
 
 	r := chi.NewMux()
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Compress(6))
+	r.Use(middleware.Logger)
 	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
 	r.Use(middlewares.StripPrefix(cfg.URLPrefix))
 
