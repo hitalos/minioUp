@@ -20,6 +20,7 @@ type (
 		SecretKey    string        `yaml:"secretKey"`
 		Destinations []Destination `yaml:"destinations"`
 		AllowedHosts []string      `yaml:"allowedHosts"`
+		URLPrefix    string        `yaml:"urlPrefix"`
 	}
 
 	Destination struct {

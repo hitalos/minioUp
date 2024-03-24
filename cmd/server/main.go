@@ -43,6 +43,7 @@ func main() {
 	}
 
 	i18n.LoadTranslations()
+	templates.SetURLPrefix(cfg.URLPrefix)
 
 	if err := minioClient.Init(cfg); err != nil {
 		fmt.Println(err)
@@ -51,6 +52,8 @@ func main() {
 
 	r := chi.NewMux()
 	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
+	r.Use(middlewares.StripPrefix(cfg.URLPrefix))
+
 	r.NotFound(handlers.NotFoundHandler)
 
 	r.Route("/", func(r chi.Router) {

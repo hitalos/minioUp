@@ -1,7 +1,7 @@
 {{ template "header.html" . }}
 
 <main>
-	<form class="index" action="/form" method="POST">
+	<form class="index" action="{{ urlPrefix }}/form" method="POST">
 		<select name="destination" id="destination" required>
 			<option></option>
 			{{ range $idx, $dest:= .Destinations }}
