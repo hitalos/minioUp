@@ -19,6 +19,7 @@ type (
 		AccessKey    string        `yaml:"accessKey"`
 		SecretKey    string        `yaml:"secretKey"`
 		Destinations []Destination `yaml:"destinations"`
+		AllowedHosts []string      `yaml:"allowedHosts"`
 	}
 
 	Destination struct {

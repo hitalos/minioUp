@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/hitalos/minioUp/cmd/server/handlers"
 	"github.com/hitalos/minioUp/cmd/server/i18n"
+	"github.com/hitalos/minioUp/cmd/server/middlewares"
 	"github.com/hitalos/minioUp/cmd/server/public"
 	"github.com/hitalos/minioUp/config"
 	"github.com/hitalos/minioUp/services/minioClient"
@@ -49,6 +50,7 @@ func main() {
 	}
 
 	r := chi.NewMux()
+	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
 	r.NotFound(handlers.NotFoundHandler)
 
 	r.Route("/", func(r chi.Router) {
