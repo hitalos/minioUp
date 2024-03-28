@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"gopkg.in/yaml.v3"
 )
@@ -32,12 +33,17 @@ type (
 	}
 
 	Template struct {
-		Model       string `yaml:"model"`
-		Description string `yaml:"description"`
-		Regex       string `yaml:"regex"`
-		Example     string `yaml:"example"`
+		Model       string         `yaml:"model"`
+		Description string         `yaml:"description"`
+		Pattern     string         `yaml:"pattern"`
+		regex       *regexp.Regexp `yaml:"-"`
+		Example     string         `yaml:"example"`
 	}
 )
+
+func (t *Template) Validate(s string) bool {
+	return t.regex.MatchString(s)
+}
 
 func (c *Config) Load(configFile string) error {
 	ext := filepath.Ext(configFile)
@@ -50,5 +56,19 @@ func (c *Config) Load(configFile string) error {
 		return err
 	}
 
-	return yaml.NewDecoder(f).Decode(c)
+	if err := yaml.NewDecoder(f).Decode(c); err != nil {
+		return errors.New(`error decoding config: "` + err.Error() + `"`)
+	}
+
+	for i, d := range c.Destinations {
+		if d.Template.Pattern != "" {
+			var err error
+			c.Destinations[i].Template.regex, err = regexp.Compile(d.Template.Pattern)
+			if err != nil {
+				return errors.New(err.Error() + ` on destination "` + d.Name + `"`)
+			}
+		}
+	}
+
+	return nil
 }

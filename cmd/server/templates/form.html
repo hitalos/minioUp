@@ -10,7 +10,7 @@
 				{{ if ne .Description "" }}
 					{{ with .Description }}<label for="params">{{ . }}</label>{{ end }}
 					<input type="text" name="params" id="params" required
-						{{- with .Regex }} pattern="{{ . }}"{{ end -}}
+						{{- with .Pattern }} pattern="{{ . }}"{{ end -}}
 						{{- with .Example }} placeholder="{{ . }}"{{ end -}}
 					>
 				{{ end -}}
