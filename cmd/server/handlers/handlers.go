@@ -103,7 +103,13 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 		}
 		defer f.Close()
 
-		if err := minioClient.Upload(cfg.Destinations[destIdx], f, fh.Filename, strings.Split(r.PostFormValue("params"), " ")); err != nil {
+		params := r.PostFormValue("params")
+		if !cfg.Destinations[destIdx].Template.Validate(params) {
+			ErrorHandler("Invalid params", err, w, http.StatusBadRequest)
+			return
+		}
+
+		if err := minioClient.Upload(cfg.Destinations[destIdx], f, fh.Filename, strings.Split(params, " ")); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
 		}
