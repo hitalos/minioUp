@@ -3,6 +3,7 @@ package templates
 import (
 	"fmt"
 	"html/template"
+	"strings"
 
 	"github.com/hitalos/minioUp/cmd/server/i18n"
 )
@@ -36,5 +37,5 @@ func getURLPrefix() string {
 }
 
 func SetURLPrefix(prefix string) {
-	urlPrefix = prefix
+	urlPrefix = strings.TrimSuffix(prefix, "/")
 }

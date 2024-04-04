@@ -114,7 +114,7 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Location", cfg.URLPrefix)
+		w.Header().Set("Location", cfg.URLPrefix+"/")
 		w.WriteHeader(http.StatusSeeOther)
 	}
 }
@@ -133,7 +133,7 @@ func Delete(cfg config.Config) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Location", cfg.URLPrefix)
+		w.Header().Set("Location", cfg.URLPrefix+"/")
 		w.WriteHeader(http.StatusSeeOther)
 	}
 }
