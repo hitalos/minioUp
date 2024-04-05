@@ -122,6 +122,12 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 
 		w.Header().Set("Location", cfg.URLPrefix+"/")
 		w.WriteHeader(http.StatusSeeOther)
+
+		if dest.WebHook != nil {
+			if err := hitWebHook(dest); err != nil {
+				slog.Error("Error sending webhook", err)
+			}
+		}
 	}
 }
 
@@ -142,6 +148,12 @@ func Delete(cfg config.Config) http.HandlerFunc {
 
 		w.Header().Set("Location", cfg.URLPrefix+"/")
 		w.WriteHeader(http.StatusSeeOther)
+
+		if dest.WebHook != nil {
+			if err := hitWebHook(dest); err != nil {
+				slog.Error("Error sending webhook", err)
+			}
+		}
 	}
 }
 
@@ -159,4 +171,39 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	if err := templates.Exec(w, "error.html", "Not found"); err != nil {
 		slog.Error("Error executing template", err)
 	}
+}
+
+func hitWebHook(dest config.Destination) error {
+	method := http.MethodPost
+	if dest.WebHook.Method != "" {
+		method = dest.WebHook.Method
+	}
+
+	req, err := http.NewRequest(method, dest.WebHook.URL, nil)
+	if err != nil {
+		return err
+	}
+
+	if dest.WebHook.Headers != nil {
+		for k, v := range dest.WebHook.Headers {
+			req.Header.Set(k, v)
+		}
+	}
+
+	if dest.WebHook.Fields != nil {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		for k, v := range dest.WebHook.Fields {
+			req.PostForm.Set(k, v)
+		}
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	slog.Info("webhook response", "status", resp.StatusCode)
+
+	return nil
 }

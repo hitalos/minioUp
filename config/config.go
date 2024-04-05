@@ -31,6 +31,7 @@ type (
 		Prefix       string    `yaml:"prefix"`
 		AllowedTypes []string  `yaml:"allowedTypes" validate:"min=1"`
 		Template     *Template `yaml:"template"`
+		WebHook      *WebHook  `yaml:"webhook"`
 	}
 
 	Template struct {
@@ -39,6 +40,13 @@ type (
 		Pattern     string         `yaml:"pattern"`
 		regex       *regexp.Regexp `yaml:"-"`
 		Example     string         `yaml:"example"`
+	}
+
+	WebHook struct {
+		URL     string            `yaml:"url" validate:"required,url"`
+		Method  string            `yaml:"method"`
+		Headers map[string]string `yaml:"headers"`
+		Fields  map[string]string `yaml:"fields"`
 	}
 )
 
