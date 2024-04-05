@@ -93,7 +93,7 @@ func List(dest config.Destination) ([]minio.ObjectInfo, error) {
 		return nil, err
 	}
 
-	opts := minio.ListObjectsOptions{Prefix: dest.Prefix, Recursive: true}
+	opts := minio.ListObjectsOptions{Prefix: dest.Prefix, Recursive: true, WithMetadata: true}
 	objCh := client.ListObjects(context.Background(), dest.Bucket, opts)
 	list := make([]minio.ObjectInfo, 0)
 	for obj := range objCh {

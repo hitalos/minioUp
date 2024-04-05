@@ -21,9 +21,10 @@ const (
 
 type (
 	fileInfo struct {
-		Name    string
-		Size    int64
-		LastMod time.Time
+		Name     string
+		Size     int64
+		LastMod  time.Time
+		Metadata map[string]string
 	}
 
 	fileInfoList []fileInfo
@@ -72,7 +73,11 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 		}
 
 		for _, obj := range list {
-			d.List = append(d.List, fileInfo{obj.Key[len(dest.Prefix)+1:], obj.Size, obj.LastModified})
+			d.List = append(d.List, fileInfo{
+				obj.Key[len(dest.Prefix)+1:],
+				obj.Size,
+				obj.LastModified,
+				map[string]string(obj.UserMetadata)})
 		}
 
 		sort.Sort(d.List)
