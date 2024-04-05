@@ -26,7 +26,7 @@ func main() {
 	flag.Parse()
 
 	cfg := config.Config{}
-	if err := cfg.Load(*configFile); err != nil {
+	if err := cfg.Parse(*configFile); err != nil {
 		if os.IsNotExist(err) {
 			fmt.Println("config file not found\nExample at: https://github.com/hitalos/minioUp")
 			os.Exit(1)

@@ -96,6 +96,7 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Error parsing form", err, w, http.StatusBadRequest)
 			return
 		}
+		dest := cfg.Destinations[destIdx]
 
 		if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 			ErrorHandler("Error parsing uploaded file", err, w, http.StatusUnprocessableEntity)
@@ -109,12 +110,12 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 		defer f.Close()
 
 		params := r.PostFormValue("params")
-		if !cfg.Destinations[destIdx].Template.Validate(params) {
+		if dest.Template != nil && !dest.Template.Validate(params) {
 			ErrorHandler("Invalid params", err, w, http.StatusBadRequest)
 			return
 		}
 
-		if err := minioClient.Upload(cfg.Destinations[destIdx], f, fh.Filename, strings.Split(params, " ")); err != nil {
+		if err := minioClient.Upload(dest, f, fh.Filename, strings.Split(params, " ")); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
 		}
@@ -131,9 +132,10 @@ func Delete(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
 			return
 		}
+		dest := cfg.Destinations[destIdx]
 
 		filename := r.PathValue("filename")
-		if err := minioClient.Delete(cfg.Destinations[destIdx], filename); err != nil {
+		if err := minioClient.Delete(dest, filename); err != nil {
 			ErrorHandler("Error deleting file", err, w, http.StatusInternalServerError)
 			return
 		}

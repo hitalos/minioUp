@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,20 +16,20 @@ var (
 
 type (
 	Config struct {
-		Endpoint     string        `yaml:"endpoint"`
+		Endpoint     string        `yaml:"endpoint" validate:"required,hostname"`
 		Secure       bool          `yaml:"secure"`
-		AccessKey    string        `yaml:"accessKey"`
-		SecretKey    string        `yaml:"secretKey"`
-		Destinations []Destination `yaml:"destinations"`
-		AllowedHosts []string      `yaml:"allowedHosts"`
+		AccessKey    string        `yaml:"accessKey" validate:"required"`
+		SecretKey    string        `yaml:"secretKey" validate:"required"`
+		Destinations []Destination `yaml:"destinations" validate:"required,dive"`
+		AllowedHosts []string      `yaml:"allowedHosts" validate:"min=1,dive,hostname_port"`
 		URLPrefix    string        `yaml:"urlPrefix"`
 	}
 
 	Destination struct {
-		Name         string    `yaml:"name"`
-		Bucket       string    `yaml:"bucket"`
+		Name         string    `yaml:"name" validate:"required"`
+		Bucket       string    `yaml:"bucket" validate:"required"`
 		Prefix       string    `yaml:"prefix"`
-		AllowedTypes []string  `yaml:"allowedTypes"`
+		AllowedTypes []string  `yaml:"allowedTypes" validate:"min=1"`
 		Template     *Template `yaml:"template"`
 	}
 
@@ -42,6 +43,10 @@ type (
 )
 
 func (t *Template) Validate(s string) bool {
+	if t.Pattern == "" {
+		return true
+	}
+
 	return t.regex.MatchString(s)
 }
 
@@ -60,8 +65,28 @@ func (c *Config) Load(configFile string) error {
 		return errors.New(`error decoding config: "` + err.Error() + `"`)
 	}
 
+	for i := range c.Destinations {
+		if c.Destinations[i].Name == "" {
+			c.Destinations[i].Name = c.Destinations[i].Bucket
+		}
+	}
+
+	return nil
+}
+
+func (c *Config) Parse(configFile string) error {
+	if err := c.Load(configFile); err != nil {
+		return err
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	if err := validate.Struct(c); err != nil {
+		return errors.New(`error validating config: "` + err.Error() + `"`)
+	}
+
 	for i, d := range c.Destinations {
-		if d.Template.Pattern != "" {
+		if d.Template != nil && d.Template.Pattern != "" {
 			var err error
 			c.Destinations[i].Template.regex, err = regexp.Compile(d.Template.Pattern)
 			if err != nil {
