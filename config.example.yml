@@ -1,3 +1,4 @@
+port: ":9000" # optional
 endpoint: localhost:9000
 secure: false
 accessKey: minio

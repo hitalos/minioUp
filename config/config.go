@@ -16,6 +16,7 @@ var (
 
 type (
 	Config struct {
+		Port         string        `yaml:"port" validate:"required,hostname_port"`
 		Endpoint     string        `yaml:"endpoint" validate:"required,hostname"`
 		Secure       bool          `yaml:"secure"`
 		AccessKey    string        `yaml:"accessKey" validate:"required"`
@@ -71,6 +72,10 @@ func (c *Config) Load(configFile string) error {
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
 		return errors.New(`error decoding config: "` + err.Error() + `"`)
+	}
+
+	if c.Port == "" {
+		c.Port = "localhost:8000"
 	}
 
 	for i := range c.Destinations {

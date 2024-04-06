@@ -72,14 +72,14 @@ func main() {
 	})
 
 	s := http.Server{
-		Addr:         ":8000",
+		Addr:         cfg.Port,
 		Handler:      r,
 		IdleTimeout:  time.Second * 30,
 		ReadTimeout:  time.Second * 30,
 		WriteTimeout: time.Second * 30,
 	}
 
-	fmt.Println("Listening on http://localhost:8000")
+	slog.Info("Listening on", "port", s.Addr)
 	if err := s.ListenAndServe(); err != nil {
 		fmt.Println(err)
 	}
