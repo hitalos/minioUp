@@ -1,17 +1,13 @@
 package minioClient
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"mime"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 
-	"github.com/Masterminds/sprig/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
@@ -59,33 +55,12 @@ func Upload(dest config.Destination, r io.Reader, filename string, params []stri
 
 	path := filepath.Join(dest.Prefix, originalFilename)
 	if dest.Template != nil {
-		tmpl := dest.Template.Model
-		path = filepath.Join(dest.Prefix, mountName(tmpl, append([]string{originalFilename}, params...)))
+		path = filepath.Join(dest.Prefix, dest.Template.MountName(append([]string{originalFilename}, params...)))
 	}
 
 	_, err := client.PutObject(context.Background(), dest.Bucket, path, r, -1, options)
 
 	return err
-}
-
-func mountName(templateString string, params []string) string {
-	if templateString == "" {
-		return filepath.Base(params[0])
-	}
-
-	tmpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(templateString)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	str := new(bytes.Buffer)
-	if err := tmpl.Execute(str, params); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	return str.String()
 }
 
 func List(dest config.Destination) ([]minio.ObjectInfo, error) {

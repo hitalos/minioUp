@@ -1,11 +1,15 @@
 package config
 
 import (
+	"bytes"
 	"errors"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
+	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
 )
@@ -36,7 +40,8 @@ type (
 	}
 
 	Template struct {
-		Model       string         `yaml:"model"`
+		Model       string `yaml:"model"`
+		modelTmpl   *template.Template
 		Description string         `yaml:"description"`
 		Pattern     string         `yaml:"pattern"`
 		regex       *regexp.Regexp `yaml:"-"`
@@ -57,6 +62,20 @@ func (t *Template) Validate(s string) bool {
 	}
 
 	return t.regex.MatchString(s)
+}
+
+func (t Template) MountName(params []string) string {
+	if t.Model == "" {
+		return filepath.Base(params[0])
+	}
+
+	str := new(bytes.Buffer)
+	if err := t.modelTmpl.Execute(str, params); err != nil {
+		slog.Error("error executing template to mount filename", err)
+		return filepath.Base(params[0])
+	}
+
+	return str.String()
 }
 
 func (c *Config) Load(configFile string) error {
@@ -99,12 +118,24 @@ func (c *Config) Parse(configFile string) error {
 	}
 
 	for i, d := range c.Destinations {
-		if d.Template != nil && d.Template.Pattern != "" {
+		if d.Template == nil {
+			continue
+		}
+
+		if d.Template.Pattern != "" {
 			var err error
 			c.Destinations[i].Template.regex, err = regexp.Compile(d.Template.Pattern)
 			if err != nil {
-				return errors.New(err.Error() + ` on destination "` + d.Name + `"`)
+				return errors.New(err.Error() + ` on pattern of destination "` + d.Name + `"`)
 			}
+		}
+
+		if d.Template.Model != "" {
+			tmpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(d.Template.Model)
+			if err != nil {
+				return errors.New(err.Error() + ` on model ofdestination "` + d.Name + `"`)
+			}
+			d.Template.modelTmpl = tmpl
 		}
 	}
 
