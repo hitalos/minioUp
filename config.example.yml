@@ -1,13 +1,36 @@
 port: ":9000" # optional
 endpoint: localhost:9000
-secure: false
+secure: false # optional
 accessKey: minio
 secretKey: "************"
+allowHosts: ["localhost:8000", "127.0.0.1:8000"]
+urlPrefix: /url-prefix # optional
 
 destinations:
   - bucket: uploads
     name: uploads # optional
     prefix: "" # optional
-    template: "" # optional
+    allowedTypes: ["jpg", "png", "pdf"] # optional
+    template: # optional
+      model: "{{ lower (index . 0) }}"
+      pattern: "regex pattern" # optional
+      example: "placeholder text" # optional
+      description: "label description text" # optional
+    webhook:
+      url: https://yourwebhookurl.com/api/webhook
+      method: POST # optional
+      headers: # optional
+        key1: value1
+        key2: value2
+      fields: # optional
+        key1: value1
+        key2: value2
+
+
   - bucket: temp
-  - bucket: pessoal
+    name: temporary files # optional
+
+  - bucket: personal # if name is not set, it will be the same as bucket
+    allowedTypes:
+      - jpg
+      - png
