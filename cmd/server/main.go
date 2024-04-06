@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -37,11 +36,11 @@ func main() {
 	cfg := config.Config{}
 	if err := cfg.Parse(*configFile); err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("config file not found\nExample at: https://github.com/hitalos/minioUp")
+			slog.Error("config file not found. Example at: https://github.com/hitalos/minioUp")
 			os.Exit(1)
 		}
 
-		fmt.Println(err)
+		slog.Error("error parsing config", err)
 		os.Exit(1)
 	}
 
@@ -49,7 +48,7 @@ func main() {
 	templates.SetURLPrefix(cfg.URLPrefix)
 
 	if err := minioClient.Init(cfg); err != nil {
-		fmt.Println(err)
+		slog.Error("error on initialize minio client", err)
 		os.Exit(1)
 	}
 
@@ -81,6 +80,6 @@ func main() {
 
 	slog.Info("Listening on", "port", s.Addr)
 	if err := s.ListenAndServe(); err != nil {
-		fmt.Println(err)
+		slog.Error("error trying to start server", err)
 	}
 }
