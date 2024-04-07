@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -74,7 +75,7 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 
 		for _, obj := range list {
 			d.List = append(d.List, fileInfo{
-				obj.Key[len(dest.Prefix)+1:],
+				filepath.Base(obj.Key),
 				obj.Size,
 				obj.LastModified,
 				map[string]string(obj.UserMetadata)})
