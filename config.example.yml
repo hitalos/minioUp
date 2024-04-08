@@ -10,13 +10,13 @@ destinations:
   - bucket: uploads
     name: uploads # optional
     prefix: "" # optional
-    allowedTypes: ["jpg", "png", "pdf"] # optional
+    allowedTypes: ["jpg", "png", "pdf"]
     template: # optional
       model: "{{ lower (index . 0) }}"
       pattern: "regex pattern" # optional
       example: "placeholder text" # optional
       description: "label description text" # optional
-    webhook:
+    webhook: # optional
       url: https://yourwebhookurl.com/api/webhook
       method: POST # optional
       headers: # optional

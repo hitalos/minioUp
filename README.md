@@ -1,6 +1,6 @@
 # Minio Uploader
 
-CLI to upload files to [Minio](https://min.io/) (AWS S3 compatible self-hosted service).
+Web interface to upload files to AWS S3 or [Minio](https://min.io/) (AWS S3 compatible self-hosted service).
 
 You can try this project with a local instance of [Minio](https://min.io/). There is a task on `Makefile` (minio-server) to run a local container. You will need [docker](https://www.docker.com) or [podman](https://podman.io) to run it. After start your minio container, access it on `http://localhost:9000` and create your buckets.
 
@@ -40,15 +40,33 @@ P.S.: If you running `minioUp` without a "standard input" (ex.: inside a crontab
 Considering the following configuration:
 
 ```yaml
+port: ":8000"
 endpoint: minio.domain.com
 secure: false
 accessKey: minio
 secretKey: minio
+allowedHosts:
+  - localhost:8000
 
 destinations:
   - bucket: uploads
-    prefix: "2024/03"
+    prefix: "2024/03" # optional
     name: "uploads - march" # will be showed as "uploads - march" on menu
+    allowedTypes: ["jpg", "png", "pdf"]
+    template: # optional
+      model: "{{ lower (index . 0) }}"
+      pattern: "regex pattern" # optional
+      example: "placeholder text" # optional
+      description: "label description text" # optional
+    webhook: # optional
+      url: https://yourwebhookurl.com/api/webhook
+      method: POST # optional
+      headers: # optional
+        key1: value1
+        key2: value2
+      fields: # optional
+        key1: value1
+        key2: value2
 ```
 
 With the following command:
