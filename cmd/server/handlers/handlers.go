@@ -35,10 +35,45 @@ func (il fileInfoList) Len() int           { return len(il) }
 func (il fileInfoList) Swap(i, j int)      { il[i], il[j] = il[j], il[i] }
 func (il fileInfoList) Less(i, j int) bool { return il[i].LastMod.Unix() > il[j].LastMod.Unix() }
 
+func filterDestinationsByRoles(r *http.Request, cfg config.Config) []config.Destination {
+	if cfg.Auth.Driver == "" {
+		return cfg.Destinations
+	}
+
+	dests := []config.Destination{}
+	for _, d := range cfg.Destinations {
+		if len(d.AllowedRoles) == 0 {
+			dests = append(dests, d)
+			continue
+		}
+
+		toInclude := false
+		for _, role := range d.AllowedRoles {
+			for _, r := range r.Header.Values("X-Roles") {
+				if r == role {
+					toInclude = true
+					break
+				}
+			}
+		}
+
+		if toInclude {
+			dests = append(dests, d)
+		}
+	}
+
+	return dests
+}
+
 func Index(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(cfg.Destinations) > 1 {
-			if err := templates.Exec(w, "index.html", cfg); err != nil {
+		dests := filterDestinationsByRoles(r, cfg)
+		if len(dests) > 1 {
+			d := map[string]any{
+				"Destinations": dests,
+				"Auth":         map[string]string{"Username": r.Header.Get("X-Forwarded-Preferred-Username")},
+			}
+			if err := templates.Exec(w, "index.html", d); err != nil {
 				ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
 			}
 			return
@@ -55,17 +90,19 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
 			return
 		}
-		dest := cfg.Destinations[destIdx]
+
+		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
 		type (
 			data struct {
+				Auth           map[string]string
 				Destination    config.Destination
 				DestinationIdx int
 				List           fileInfoList
 			}
 		)
-
-		d := data{dest, destIdx, make(fileInfoList, 0)}
+		username := r.Header.Get("X-Forwarded-Preferred-Username")
+		d := data{map[string]string{"Username": username}, dest, destIdx, make(fileInfoList, 0)}
 
 		list, err := minioClient.List(dest)
 		if err != nil {

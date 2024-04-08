@@ -26,8 +26,14 @@ body {
 
 header {
 	background-color: lightgray;
+	display: flex;
+	justify-content: space-between;
 	margin-bottom: 1rem;
 	padding: 1rem;
+}
+
+header a {
+	color: navy;
 }
 
 main {
@@ -95,6 +101,10 @@ form.actions button {
 	background-color: none;
 	border: none;
 	padding: .5rem;
+}
+
+form.login input {
+	display: block;
 }
 
 button,

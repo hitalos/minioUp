@@ -9,4 +9,5 @@
 <body>
 	<header>
 		<h1>MinioUp</h1>
+		{{ with .Auth }}<a href="{{ urlPrefix }}/auth/logout">{{ i18n "Logout" }} ({{ .Username }})</a>{{ end }}
 	</header>

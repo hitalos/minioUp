@@ -21,19 +21,25 @@ var (
 type (
 	Config struct {
 		Port         string        `yaml:"port" validate:"required,hostname_port"`
-		Endpoint     string        `yaml:"endpoint" validate:"required,hostname"`
+		Endpoint     string        `yaml:"endpoint" validate:"required,hostname|hostname_port"`
 		Secure       bool          `yaml:"secure"`
 		AccessKey    string        `yaml:"accessKey" validate:"required"`
 		SecretKey    string        `yaml:"secretKey" validate:"required"`
 		Destinations []Destination `yaml:"destinations" validate:"required,dive"`
-		AllowedHosts []string      `yaml:"allowedHosts" validate:"min=1,dive,hostname_port"`
+		AllowedHosts []string      `yaml:"allowedHosts" validate:"dive,hostname_port|hostname"`
 		URLPrefix    string        `yaml:"urlPrefix"`
+		Auth         Auth          `yaml:"auth"`
 	}
 
+	Auth struct {
+		Driver string            `yaml:"driver"`
+		Params map[string]string `yaml:"params"`
+	}
 	Destination struct {
 		Name         string    `yaml:"name" validate:"required"`
 		Bucket       string    `yaml:"bucket" validate:"required"`
 		Prefix       string    `yaml:"prefix"`
+		AllowedRoles []string  `yaml:"allowedRoles"`
 		AllowedTypes []string  `yaml:"allowedTypes" validate:"min=1"`
 		Template     *Template `yaml:"template"`
 		WebHook      *WebHook  `yaml:"webhook"`

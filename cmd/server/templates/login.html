@@ -1,0 +1,12 @@
+{{ template "header.html" . }}
+<main>
+	<h2>{{ .Title }}</h2>
+
+	<form action="{{ urlPrefix }}/auth/login" method="POST" class="login">
+		<input type="text" id="username" name="username" required placeholder="{{ i18n "username" }}">
+		<input type="password" id="password" name="password" required placeholder="{{ i18n "password" }}">
+
+		<button type="submit">{{ i18n "Login" }}</button>
+	</form>
+</main>
+{{ template "footer.html" . }}

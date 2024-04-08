@@ -6,6 +6,11 @@ secretKey: "************"
 allowHosts: ["localhost:8000", "127.0.0.1:8000"]
 urlPrefix: /url-prefix # optional
 
+auth:
+  driver: cookie # options: cookie, reverseProxy
+  params:
+    secret: "************"
+
 destinations:
   - bucket: uploads
     name: uploads # optional

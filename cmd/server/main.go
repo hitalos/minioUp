@@ -18,6 +18,7 @@ import (
 	"github.com/hitalos/minioUp/cmd/server/handlers"
 	"github.com/hitalos/minioUp/cmd/server/i18n"
 	"github.com/hitalos/minioUp/cmd/server/middlewares"
+	"github.com/hitalos/minioUp/cmd/server/middlewares/auth"
 	"github.com/hitalos/minioUp/cmd/server/public"
 	"github.com/hitalos/minioUp/cmd/server/templates"
 	"github.com/hitalos/minioUp/config"
@@ -66,13 +67,15 @@ func main() {
 	r.NotFound(handlers.NotFoundHandler)
 
 	r.Route("/", func(r chi.Router) {
+		r.Use(auth.NewAuthenticator(cfg))
+
 		r.Get("/", handlers.Index(cfg))
 		r.Post("/form", handlers.ShowUploadForm(cfg))
 		r.Post("/upload", handlers.ProcessUploadForm(cfg))
 		r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
-
-		r.Handle("/assets/*", public.Handler)
 	})
+
+	r.Handle("/assets/*", public.Handler)
 
 	s := http.Server{
 		Addr:         cfg.Port,
