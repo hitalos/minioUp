@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -78,8 +82,28 @@ func main() {
 		WriteTimeout: time.Second * 30,
 	}
 
-	slog.Info("Listening on", "port", s.Addr)
-	if err := s.ListenAndServe(); err != nil {
-		slog.Error("error trying to start server", err)
+	go func() {
+		slog.Info("Listening on", "port", s.Addr)
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("error trying to start server", err)
+		}
+		slog.Info("Server stopped gracefully")
+	}()
+
+	stopCh := make(chan os.Signal, 1)
+	signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	<-stopCh
+
+	shutdown(&s)
+}
+
+func shutdown(server *http.Server) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("server shutdown error", err)
 	}
+
+	slog.Info("server shutdowned")
 }
