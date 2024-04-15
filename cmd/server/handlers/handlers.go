@@ -121,8 +121,8 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Location", cfg.URLPrefix+"/")
-		w.WriteHeader(http.StatusSeeOther)
+		w.Header().Set("Location", cfg.URLPrefix+"/form")
+		w.WriteHeader(http.StatusTemporaryRedirect)
 
 		if dest.WebHook != nil {
 			if err := hitWebHook(dest); err != nil {
@@ -141,14 +141,14 @@ func Delete(cfg config.Config) http.HandlerFunc {
 		}
 		dest := cfg.Destinations[destIdx]
 
-		filename := r.PathValue("filename")
+		filename, _ := url.PathUnescape(r.PathValue("filename"))
 		if err := minioClient.Delete(dest, filename); err != nil {
 			ErrorHandler("Error deleting file", err, w, http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("Location", cfg.URLPrefix+"/")
-		w.WriteHeader(http.StatusSeeOther)
+		w.Header().Set("Location", cfg.URLPrefix+"/form")
+		w.WriteHeader(http.StatusTemporaryRedirect)
 
 		if dest.WebHook != nil {
 			if err := hitWebHook(dest); err != nil {

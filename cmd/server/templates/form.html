@@ -37,6 +37,7 @@
 					<td>{{ .LastMod.Format "02-01-2006 15:04:05" }}</td>
 					<td>
 						<form class="actions" method="POST" action="{{ urlPrefix }}/delete/{{ $.DestinationIdx }}/{{ .Name }}">
+							<input type="hidden" name="destination" value="{{ $.DestinationIdx }}">
 							<button class="btn delete" title="{{ i18n "Delete" }}">❌</button>
 						</form>
 					</td>
