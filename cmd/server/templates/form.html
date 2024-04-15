@@ -16,7 +16,10 @@
 				{{ end -}}
 			{{ end -}}
 		{{ end -}}
-		<button type="submit">{{ i18n "Upload" }}</button>
+		<fieldset>
+			<a class="btn" href="{{ urlPrefix }}/">{{ i18n "Go back" }}</a>
+			<button type="submit">{{ i18n "Upload" }}</button>
+		</fieldset>
 	</form>
 	{{ with .List }}
 	<table>

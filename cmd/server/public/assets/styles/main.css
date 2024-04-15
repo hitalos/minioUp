@@ -44,8 +44,16 @@ footer {
 	text-align: right;
 }
 
+fieldset {
+	border: 0;
+}
+
 form.index {
 	margin: 1rem 0;
+}
+
+form.index button {
+	display: block;
 }
 
 select {
@@ -54,7 +62,7 @@ select {
 
 form input,
 form button,
-form span.btn {
+form a.btn {
 	border: 1px solid navy;
 	border-radius: .25rem;
 	margin: auto;
@@ -76,7 +84,7 @@ form.upload label {
 }
 
 form.upload input {
-	border 2px;
+	border: 2px solid black;
 }
 
 form.upload input:invalid {
@@ -90,24 +98,27 @@ form.actions button {
 }
 
 button,
-span.btn {
+a.btn {
 	color: white;
 	cursor: pointer;
 	font-weight: bold;
 }
 
+a.btn,
 button[type=submit] {
 	background-color: #0082ac;
-	cursor: pointer;
-	display: block;
 	font-size: 1.5rem;
 	margin-top: 2rem;
 }
 
+a.btn {
+	font-size: 1.2rem;
+}
+
 button:hover,
 button:focus,
-span.btn:hover,
-span.btn:focus {
+a.btn:hover,
+a.btn:focus {
 	background-color: #2ecbff;
 }
 
