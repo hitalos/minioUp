@@ -45,7 +45,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		slog.Error("error parsing config", err)
+		slog.Error("error parsing config", "error", err)
 		os.Exit(1)
 	}
 

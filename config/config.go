@@ -123,7 +123,15 @@ func (c *Config) Parse(configFile string) error {
 		return errors.New(`error validating config: "` + err.Error() + `"`)
 	}
 
+	names := []string{}
 	for i, d := range c.Destinations {
+		for _, name := range names {
+			if name == d.Name {
+				return errors.New("duplicate destination name: " + d.Name)
+			}
+		}
+		names = append(names, d.Name)
+
 		if d.Template == nil {
 			continue
 		}
