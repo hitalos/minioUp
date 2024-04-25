@@ -7,7 +7,7 @@ RUN go mod download
 ADD . .
 RUN CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
 
-FROM scratch
+FROM alpine
 
 WORKDIR /app
 COPY --from=builder /app/dist/minioUpServer ./
