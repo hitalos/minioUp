@@ -40,4 +40,12 @@ sec:
 	trivy fs .
 	grype . --add-cpes-if-none
 
-.PHONY: all clean dist/minioUp dist/minioUpServer install lint sec
+CONTAINER_RUNTINE=$(shell [ -e /usr/bin/podman ] && echo podman || echo docker)
+container-image:
+	$(CONTAINER_RUNTINE) build -t minioup .
+
+container-image-sec:
+	trivy image minioup
+	grype minioup
+
+.PHONY: all clean container-image container-image-sec dist/minioUp dist/minioUpServer install lint sec
