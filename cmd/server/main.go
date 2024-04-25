@@ -58,24 +58,28 @@ func main() {
 	}
 
 	r := chi.NewMux()
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Compress(6))
-	r.Use(middleware.Logger)
-	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
-	r.Use(middlewares.StripPrefix(cfg.URLPrefix))
-
 	r.NotFound(handlers.NotFoundHandler)
 
-	r.Route("/", func(r chi.Router) {
-		r.Use(auth.NewAuthenticator(cfg))
+	r.Route(cfg.URLPrefix+"/", func(r chi.Router) {
+		r.Use(middleware.RealIP)
+		r.Use(middleware.Compress(6))
+		r.Use(middleware.Logger)
+		r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
+		r.Use(middlewares.StripPrefix(cfg.URLPrefix))
 
-		r.Get("/", handlers.Index(cfg))
-		r.Post("/form", handlers.ShowUploadForm(cfg))
-		r.Post("/upload", handlers.ProcessUploadForm(cfg))
-		r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
+		r.Route("/", func(r chi.Router) {
+			r.Use(auth.NewAuthenticator(cfg))
+
+			r.Get("/", handlers.Index(cfg))
+			r.Post("/form", handlers.ShowUploadForm(cfg))
+			r.Post("/upload", handlers.ProcessUploadForm(cfg))
+			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
+		})
+
+		r.Handle("/assets/*", public.Handler)
 	})
 
-	r.Handle("/assets/*", public.Handler)
+	r.Get("/healthz", handlers.HealthCheck)
 
 	s := http.Server{
 		Addr:         cfg.Port,
