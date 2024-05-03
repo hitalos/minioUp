@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/hitalos/minioUp/cmd/server/handlers"
 	"github.com/hitalos/minioUp/cmd/server/i18n"
@@ -80,6 +81,7 @@ func main() {
 	})
 
 	r.Get("/healthz", handlers.HealthCheck)
+	r.Handle("/metrics", promhttp.Handler())
 
 	s := http.Server{
 		Addr:         cfg.Port,
