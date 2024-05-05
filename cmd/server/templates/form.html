@@ -50,4 +50,15 @@
 	</table>
 	{{ end }}
 </main>
+<script>
+	(() => {
+	document.querySelectorAll('button.delete').forEach(button => {
+		button.addEventListener('click', (ev) => {
+			if (!confirm('{{ i18n "Are you sure you want to delete this file?" }}')) {
+				ev.preventDefault()
+			}
+		})
+	})
+})()
+</script>
 {{ template "footer.html" . }}
