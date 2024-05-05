@@ -18,12 +18,12 @@ func LoadTranslations() {
 
 	f, err := locales.Open("locales/" + defaultLocale + ".json")
 	if err != nil {
-		slog.Error("error reading translations", err)
+		slog.Error("error reading translations", "error", err)
 		return
 	}
 	defer f.Close()
 
 	if err := json.NewDecoder(f).Decode(&translations); err != nil {
-		slog.Error("error decoding translations", err)
+		slog.Error("error decoding translations", "error", err)
 	}
 }

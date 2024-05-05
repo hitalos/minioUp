@@ -54,7 +54,7 @@ func main() {
 	templates.SetURLPrefix(cfg.URLPrefix)
 
 	if err := minioClient.Init(cfg); err != nil {
-		slog.Error("error on initialize minio client", err)
+		slog.Error("error on initialize minio client", "error", err)
 		os.Exit(1)
 	}
 
@@ -94,7 +94,7 @@ func main() {
 	go func() {
 		slog.Info("Listening on", "port", s.Addr)
 		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("error trying to start server", err)
+			slog.Error("error trying to start server", "error", err)
 		}
 		slog.Info("Server stopped gracefully")
 	}()
@@ -111,7 +111,7 @@ func shutdown(server *http.Server) {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		slog.Error("server shutdown error", err)
+		slog.Error("server shutdown error", "error", err)
 	}
 
 	slog.Info("server shutdowned")

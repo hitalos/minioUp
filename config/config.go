@@ -77,7 +77,7 @@ func (t Template) MountName(params []string) string {
 
 	str := new(bytes.Buffer)
 	if err := t.modelTmpl.Execute(str, params); err != nil {
-		slog.Error("error executing template to mount filename", err)
+		slog.Error("error executing template to mount filename", "error", err)
 		return filepath.Base(params[0])
 	}
 

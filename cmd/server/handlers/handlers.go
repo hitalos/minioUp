@@ -163,7 +163,7 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 
 		if dest.WebHook != nil {
 			if err := hitWebHook(dest); err != nil {
-				slog.Error("Error sending webhook", err)
+				slog.Error("Error sending webhook", "error", err, "webhook", dest.WebHook)
 			}
 		}
 	}
@@ -189,25 +189,25 @@ func Delete(cfg config.Config) http.HandlerFunc {
 
 		if dest.WebHook != nil {
 			if err := hitWebHook(dest); err != nil {
-				slog.Error("Error sending webhook", err)
+				slog.Error("Error sending webhook", "error", err, "webhook", dest.WebHook)
 			}
 		}
 	}
 }
 
 func ErrorHandler(msg string, err error, w http.ResponseWriter, status int) {
-	slog.Error(msg, err)
+	slog.Error(msg, "error", err)
 	w.WriteHeader(status)
 
 	if err := templates.Exec(w, "error.html", msg); err != nil {
-		slog.Error("Error executing template", err)
+		slog.Error("Error executing template", "error", err)
 	}
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	if err := templates.Exec(w, "error.html", "Not found"); err != nil {
-		slog.Error("Error executing template", err)
+		slog.Error("Error executing template", "error", err)
 	}
 }
 
