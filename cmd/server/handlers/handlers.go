@@ -247,8 +247,5 @@ func hitWebHook(dest config.Destination) error {
 }
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/healthz" {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("OK"))
-	}
+	_, _ = w.Write([]byte("OK"))
 }
