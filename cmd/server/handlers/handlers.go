@@ -153,7 +153,7 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			return
 		}
 
-		if err := minioClient.Upload(dest, f, fh.Filename, strings.Split(params, " ")); err != nil {
+		if err := minioClient.Upload(dest, f, fh.Filename, fh.Size, strings.Split(params, " ")); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
 		}

@@ -31,8 +31,9 @@ func UploadMultiple(dest config.Destination, filepaths []string, params [][]stri
 		if err != nil {
 			return err
 		}
+		stat, _ := f.Stat()
 
-		if err = Upload(dest, f, file, params[idx]); err != nil {
+		if err = Upload(dest, f, file, stat.Size(), params[idx]); err != nil {
 			return err
 		}
 		_ = f.Close()
@@ -41,7 +42,7 @@ func UploadMultiple(dest config.Destination, filepaths []string, params [][]stri
 	return nil
 }
 
-func Upload(dest config.Destination, r io.Reader, filename string, params []string) error {
+func Upload(dest config.Destination, r io.Reader, filename string, size int64, params []string) error {
 	originalFilename := filepath.Base(filename)
 
 	options := minio.PutObjectOptions{
@@ -58,7 +59,7 @@ func Upload(dest config.Destination, r io.Reader, filename string, params []stri
 		path = filepath.Join(dest.Prefix, dest.Template.MountName(append([]string{originalFilename}, params...)))
 	}
 
-	_, err := client.PutObject(context.Background(), dest.Bucket, path, r, -1, options)
+	_, err := client.PutObject(context.Background(), dest.Bucket, path, r, size, options)
 
 	return err
 }
