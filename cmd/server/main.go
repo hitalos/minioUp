@@ -73,6 +73,7 @@ func main() {
 
 			r.Get("/", handlers.Index(cfg))
 			r.Post("/form", handlers.ShowUploadForm(cfg))
+			r.Get("/form", handlers.ShowUploadForm(cfg))
 			r.Post("/upload", handlers.ProcessUploadForm(cfg))
 			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
 		})

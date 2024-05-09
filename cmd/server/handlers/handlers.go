@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	MAX_UPLOAD_SIZE = 32 << 20
+	MAX_UPLOAD_SIZE = 16 << 20
 	MAX_RESULT_LEN  = 10
 )
 
@@ -85,7 +85,7 @@ func Index(cfg config.Config) http.HandlerFunc {
 
 func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		destIdx, err := strconv.Atoi(r.PostFormValue("destination"))
+		destIdx, err := strconv.Atoi(r.FormValue("destination"))
 		if err != nil {
 			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
 			return
@@ -145,7 +145,8 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Error getting uploaded file", err, w, http.StatusBadRequest)
 			return
 		}
-		defer f.Close()
+		r.Body.Close()
+
 
 		params := r.PostFormValue("params")
 		if dest.Template != nil && !dest.Template.Validate(params) {
@@ -157,9 +158,10 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
 		}
+		f.Close()
 
-		w.Header().Set("Location", cfg.URLPrefix+"/form")
-		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.Header().Set("Location", fmt.Sprintf("%s/form?destination=%d", cfg.URLPrefix, destIdx))
+		w.WriteHeader(http.StatusSeeOther)
 
 		if dest.WebHook != nil {
 			if err := hitWebHook(dest); err != nil {
@@ -184,8 +186,8 @@ func Delete(cfg config.Config) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Location", cfg.URLPrefix+"/form")
-		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.Header().Set("Location", fmt.Sprintf("%s/form?destination=%d", cfg.URLPrefix, destIdx))
+		w.WriteHeader(http.StatusSeeOther)
 
 		if dest.WebHook != nil {
 			if err := hitWebHook(dest); err != nil {
