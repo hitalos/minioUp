@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -147,6 +149,13 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 		}
 		r.Body.Close()
 
+		if len(dest.AllowedTypes) > 0 {
+			ext := filepath.Ext(fh.Filename)[1:]
+			if !slices.Contains[[]string](dest.AllowedTypes, ext) {
+				ErrorHandler(fmt.Sprintf("Invalid file type: %q", ext), err, w, http.StatusBadRequest)
+				return
+			}
+		}
 
 		params := r.PostFormValue("params")
 		if dest.Template != nil && !dest.Template.Validate(params) {
