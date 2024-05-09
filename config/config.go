@@ -40,7 +40,7 @@ type (
 		Bucket       string    `yaml:"bucket" validate:"required"`
 		Prefix       string    `yaml:"prefix"`
 		AllowedRoles []string  `yaml:"allowedRoles"`
-		AllowedTypes []string  `yaml:"allowedTypes" validate:"min=1"`
+		AllowedTypes []string  `yaml:"allowedTypes"`
 		Template     *Template `yaml:"template"`
 		WebHook      *WebHook  `yaml:"webhook"`
 	}
