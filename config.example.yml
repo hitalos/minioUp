@@ -1,33 +1,46 @@
-port: ":9000" # optional
+port: ":9000"  # optional
 endpoint: localhost:9000
-secure: false # optional
+secure: false  # optional
 accessKey: minio
 secretKey: "************"
 allowHosts: ["localhost:8000", "127.0.0.1:8000"]
-urlPrefix: /url-prefix # optional
+urlPrefix: /url-prefix  # optional
 
 auth:
-  driver: cookie # options: cookie, reverseProxy
+  driver: cookie  # options: cookie, reverseProxy
   params:
-    secret: "************"
+    secret: "************"  # for use with cookie driver to encrypt sessions
+    urlPrefix: /url-prefix  # optional
+    skipPaths: "/assets"  # prefix to skip authorization
+    clientID: "minioup"  # for use with reverseProxy driver
 
 destinations:
   - bucket: uploads
-    name: uploads # optional
-    prefix: "" # optional
+    name: uploads  # optional, will be showed as "uploads - march" on menu
+    prefix: ""  # optional
+    model: "{{ lower (index . 0) }}"
     allowedTypes: ["jpg", "png", "pdf"]
-    template: # optional
-      model: "{{ lower (index . 0) }}"
-      pattern: "regex pattern" # optional
-      example: "placeholder text" # optional
-      description: "label description text" # optional
-    webhook: # optional
+    fields:  # optional
+      filename:
+        required: true  # optional, default is false
+        type: "text"  # optional, html input type, default is text
+        pattern: "regex pattern"  # optional
+        example: "placeholder text"  # optional
+        description: "label description text"  # optional
+        value: "initial value"  # optional
+      field2:
+        type: "datetime-local"
+        #  …
+      field3:
+        type: "number"
+        #  …
+    webhook:  # optional
       url: https://yourwebhookurl.com/api/webhook
-      method: POST # optional
-      headers: # optional
+      method: POST  # optional
+      headers:  # optional
         key1: value1
         key2: value2
-      fields: # optional
+      fields:  # optional
         key1: value1
         key2: value2
 

@@ -36,18 +36,21 @@ type (
 		Params map[string]string `yaml:"params"`
 	}
 	Destination struct {
-		Name         string    `yaml:"name" validate:"required"`
-		Bucket       string    `yaml:"bucket" validate:"required"`
-		Prefix       string    `yaml:"prefix"`
-		AllowedRoles []string  `yaml:"allowedRoles"`
-		AllowedTypes []string  `yaml:"allowedTypes"`
-		Template     *Template `yaml:"template"`
-		WebHook      *WebHook  `yaml:"webhook"`
+		Name         string            `yaml:"name" validate:"required"`
+		Bucket       string            `yaml:"bucket" validate:"required"`
+		Prefix       string            `yaml:"prefix"`
+		AllowedRoles []string          `yaml:"allowedRoles"`
+		AllowedTypes []string          `yaml:"allowedTypes"`
+		Fields       map[string]*Field `yaml:"fields"`
+		WebHook      *WebHook          `yaml:"webhook"`
+		Model        string            `yaml:"model"`
+		modelTmpl    *template.Template
 	}
 
-	Template struct {
-		Model       string `yaml:"model"`
-		modelTmpl   *template.Template
+	Field struct {
+		Type        string         `yaml:"type"`
+		IsRequired  bool           `yaml:"required"`
+		Value       string         `yaml:"value"`
 		Description string         `yaml:"description"`
 		Pattern     string         `yaml:"pattern"`
 		regex       *regexp.Regexp `yaml:"-"`
@@ -62,23 +65,23 @@ type (
 	}
 )
 
-func (t *Template) Validate(s string) bool {
-	if t.Pattern == "" {
+func (f Field) Validate() bool {
+	if f.Pattern == "" {
 		return true
 	}
 
-	return t.regex.MatchString(s)
+	return f.regex.MatchString(f.Value)
 }
 
-func (t Template) MountName(params []string) string {
-	if t.Model == "" {
-		return filepath.Base(params[0])
+func (d Destination) MountName(params map[string]string) string {
+	if d.Model == "" {
+		return filepath.Base(params["originalFilename"])
 	}
 
 	str := new(bytes.Buffer)
-	if err := t.modelTmpl.Execute(str, params); err != nil {
+	if err := d.modelTmpl.Execute(str, params); err != nil {
 		slog.Error("error executing template to mount filename", "error", err)
-		return filepath.Base(params[0])
+		return filepath.Base(params["originalFilename"])
 	}
 
 	return str.String()
@@ -132,24 +135,27 @@ func (c *Config) Parse(configFile string) error {
 		}
 		names = append(names, d.Name)
 
-		if d.Template == nil {
+		if len(d.Fields) == 0 {
 			continue
 		}
 
-		if d.Template.Pattern != "" {
-			var err error
-			c.Destinations[i].Template.regex, err = regexp.Compile(d.Template.Pattern)
-			if err != nil {
-				return errors.New(err.Error() + ` on pattern of destination "` + d.Name + `"`)
-			}
-		}
-
-		if d.Template.Model != "" {
-			tmpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(d.Template.Model)
+		if d.Model != "" {
+			tmpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(d.Model)
 			if err != nil {
 				return errors.New(err.Error() + ` on model ofdestination "` + d.Name + `"`)
 			}
-			d.Template.modelTmpl = tmpl
+			c.Destinations[i].modelTmpl = tmpl
+		}
+
+		for fieldName, f := range d.Fields {
+
+			if f.Pattern != "" {
+				var err error
+				c.Destinations[i].Fields[fieldName].regex, err = regexp.Compile(f.Pattern)
+				if err != nil {
+					return errors.New(err.Error() + ` on pattern of destination "` + d.Name + `"`)
+				}
+			}
 		}
 	}
 

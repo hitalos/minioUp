@@ -6,7 +6,6 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -25,7 +24,7 @@ func Init(cfg config.Config) error {
 	return err
 }
 
-func UploadMultiple(dest config.Destination, filepaths []string, params [][]string) error {
+func UploadMultiple(dest config.Destination, filepaths []string, params []map[string]string) error {
 	for idx, file := range filepaths {
 		f, err := os.Open(filepath.Clean(file))
 		if err != nil {
@@ -42,21 +41,19 @@ func UploadMultiple(dest config.Destination, filepaths []string, params [][]stri
 	return nil
 }
 
-func Upload(dest config.Destination, r io.Reader, filename string, size int64, params []string) error {
+func Upload(dest config.Destination, r io.Reader, filename string, size int64, params map[string]string) error {
 	originalFilename := filepath.Base(filename)
 
 	options := minio.PutObjectOptions{
-		UserMetadata: map[string]string{"originalFilename": originalFilename},
+		UserMetadata: params,
 		ContentType:  mime.TypeByExtension(filepath.Ext(filename)),
 	}
 
-	if strings.Join(params, "|") != "" {
-		options.UserMetadata["params"] = strings.Join(params, "|")
-	}
+	options.UserMetadata["originalFilename"] = originalFilename
 
 	path := filepath.Join(dest.Prefix, originalFilename)
-	if dest.Template != nil {
-		path = filepath.Join(dest.Prefix, dest.Template.MountName(append([]string{originalFilename}, params...)))
+	if dest.Model != "" {
+		path = filepath.Join(dest.Prefix, dest.MountName(options.UserMetadata))
 	}
 
 	_, err := client.PutObject(context.Background(), dest.Bucket, path, r, size, options)

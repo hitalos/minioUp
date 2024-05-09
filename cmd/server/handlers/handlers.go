@@ -9,7 +9,6 @@ import (
 	"slices"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hitalos/minioUp/cmd/server/templates"
@@ -136,18 +135,18 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Error parsing form", err, w, http.StatusBadRequest)
 			return
 		}
-		dest := cfg.Destinations[destIdx]
+		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
 		if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 			ErrorHandler("Error parsing uploaded file", err, w, http.StatusUnprocessableEntity)
 			return
 		}
-		f, fh, err := r.FormFile("file")
+		file, fh, err := r.FormFile("file")
 		if err != nil {
 			ErrorHandler("Error getting uploaded file", err, w, http.StatusBadRequest)
 			return
 		}
-		r.Body.Close()
+		_ = r.Body.Close()
 
 		if len(dest.AllowedTypes) > 0 {
 			ext := filepath.Ext(fh.Filename)[1:]
@@ -157,17 +156,25 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 			}
 		}
 
-		params := r.PostFormValue("params")
-		if dest.Template != nil && !dest.Template.Validate(params) {
-			ErrorHandler("Invalid params", err, w, http.StatusBadRequest)
-			return
+		params := make(map[string]string, 0)
+		if len(dest.Fields) != 0 {
+			for k, f := range dest.Fields {
+				f.Value = r.PostFormValue(k)
+				if f.Validate() {
+					params[k] = f.Value
+					continue
+				}
+
+				ErrorHandler(fmt.Sprintf("Invalid value for field: %s=%q", k, f.Value), err, w, http.StatusBadRequest)
+				return
+			}
 		}
 
-		if err := minioClient.Upload(dest, f, fh.Filename, fh.Size, strings.Split(params, " ")); err != nil {
+		if err := minioClient.Upload(dest, file, fh.Filename, fh.Size, params); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
 		}
-		f.Close()
+		_ = file.Close()
 
 		w.Header().Set("Location", fmt.Sprintf("%s/form?destination=%d", cfg.URLPrefix, destIdx))
 		w.WriteHeader(http.StatusSeeOther)
@@ -187,7 +194,7 @@ func Delete(cfg config.Config) http.HandlerFunc {
 			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
 			return
 		}
-		dest := cfg.Destinations[destIdx]
+		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
 		filename, _ := url.PathUnescape(r.PathValue("filename"))
 		if err := minioClient.Delete(dest, filename); err != nil {

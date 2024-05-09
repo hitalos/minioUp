@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/nexidian/gocliselect"
 
@@ -75,14 +74,14 @@ func upload(dest config.Destination) {
 		os.Exit(1)
 	}
 
-	filepaths, params := []string{}, [][]string{}
+	filepaths, params := []string{}, make([]map[string]string, 0)
 	for i, p := range flag.Args() {
 		if i%2 == 0 {
 			filepaths = append(filepaths, p)
 			continue
 		}
 
-		params = append(params, strings.Split(p, " "))
+		params = append(params, map[string]string{"filename": p})
 	}
 
 	if len(filepaths) == 0 {

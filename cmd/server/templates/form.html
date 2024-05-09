@@ -6,13 +6,15 @@
 		<input type="hidden" name="destination" value="{{ .DestinationIdx }}">
 		{{ with .Destination -}}
 			<input type="file" name="file" id="file" {{ with .AllowedTypes }}accept=".{{ . | join ", ." }}"{{ end }} required>
-			{{ with .Template }}
-				{{ if ne .Description "" }}
-					{{ with .Description }}<label for="params">{{ . }}</label>{{ end }}
-					<input type="text" name="params" id="params" autocomplete="off" required
-						{{- with .Pattern }} pattern="{{ . }}"{{ end -}}
-						{{- with .Example }} placeholder="{{ . }}"{{ end -}}
-					>
+			{{ with .Fields }}
+				{{ range $name, $f := . }}
+					{{ if ne $f.Description "" }}
+						{{ with $f.Description }}<label for="params">{{ . }}</label>{{ end }}
+						<input type="{{ with $f.Type }}{{ . }}{{ else }}text{{ end }}" name="{{ $name }}" id="{{ $name }}" autocomplete="off" {{ if $f.IsRequired }}required{{ end }}
+							{{- with $f.Pattern }} pattern="{{ . }}"{{ end -}}
+							{{- with $f.Example }} placeholder="{{ . }}"{{ end -}}
+						>
+					{{ end -}}
 				{{ end -}}
 			{{ end -}}
 		{{ end -}}
