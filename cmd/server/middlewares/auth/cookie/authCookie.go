@@ -38,6 +38,11 @@ func (cAuth CookieAuthenticator) New(params map[string]string) func(http.Handler
 		Secure:   true,
 	}
 
+	if os.Getenv("ENV") == "dev" {
+		cAuth.store.Options.SameSite = http.SameSiteLaxMode
+		cAuth.store.Options.Secure = false
+	}
+
 	if maxAge, ok := params["cookieMaxAge"]; ok {
 		if age, err := strconv.Atoi(maxAge); err == nil && age > 0 {
 			cAuth.store.Options.MaxAge = age
