@@ -37,7 +37,7 @@
 		<tbody>
 			{{ range . }}
 				<tr>
-					<td{{ with .Metadata }} title="{{ with (index . "X-Amz-Meta-Originalfilename") }}Original: {{ . }}&#013;{{ end }}{{ with (index . "X-Amz-Meta-Params") }}Params: {{ . }}{{ end }}"{{ end }}>{{ .Name }}</td>
+					<td{{ with .Metadata }} title="{{ range $k, $v := . }}&#10;{{ $k }}: {{ $v }}{{ end }}"{{ end }}>{{ .Name }}</td>
 					<td>{{ humanize .Size }}</td>
 					<td>{{ .LastMod.Format "02-01-2006 15:04:05" }}</td>
 					<td>
