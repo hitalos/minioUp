@@ -36,14 +36,14 @@ type (
 		Params map[string]string `yaml:"params"`
 	}
 	Destination struct {
-		Name         string            `yaml:"name" validate:"required"`
-		Bucket       string            `yaml:"bucket" validate:"required"`
-		Prefix       string            `yaml:"prefix"`
-		AllowedRoles []string          `yaml:"allowedRoles"`
-		AllowedTypes []string          `yaml:"allowedTypes"`
-		Fields       map[string]*Field `yaml:"fields"`
-		WebHook      *WebHook          `yaml:"webhook"`
-		Model        string            `yaml:"model"`
+		Name         string           `yaml:"name" validate:"required"`
+		Bucket       string           `yaml:"bucket" validate:"required"`
+		Prefix       string           `yaml:"prefix"`
+		AllowedRoles []string         `yaml:"allowedRoles"`
+		AllowedTypes []string         `yaml:"allowedTypes"`
+		Fields       map[string]Field `yaml:"fields" validate:"dive"`
+		WebHook      *WebHook         `yaml:"webhook"`
+		Model        string           `yaml:"model"`
 		modelTmpl    *template.Template
 	}
 
@@ -51,7 +51,7 @@ type (
 		Type        string         `yaml:"type"`
 		IsRequired  bool           `yaml:"required"`
 		Value       string         `yaml:"value"`
-		Description string         `yaml:"description"`
+		Description string         `yaml:"description" validate:"required"`
 		Pattern     string         `yaml:"pattern"`
 		regex       *regexp.Regexp `yaml:"-"`
 		Example     string         `yaml:"example"`
@@ -148,13 +148,13 @@ func (c *Config) Parse(configFile string) error {
 		}
 
 		for fieldName, f := range d.Fields {
-
 			if f.Pattern != "" {
-				var err error
-				c.Destinations[i].Fields[fieldName].regex, err = regexp.Compile(f.Pattern)
+				reg, err := regexp.Compile(f.Pattern)
 				if err != nil {
 					return errors.New(err.Error() + ` on pattern of destination "` + d.Name + `"`)
 				}
+				f.regex = reg
+				c.Destinations[i].Fields[fieldName] = f
 			}
 		}
 	}
