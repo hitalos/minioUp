@@ -196,7 +196,9 @@ func (cAuth CookieAuthenticator) isAuthenticated(r *http.Request) bool {
 	username, ok := session.Values["username"].(string)
 	if ok && username != "" {
 		r.Header.Set("X-Forwarded-Preferred-Username", username)
-		r.Header.Set("X-Roles", strings.Join(session.Values["roles"].([]string), ","))
+		for _, role := range session.Values["roles"].([]string) {
+			r.Header.Add("X-Roles", role)
+		}
 
 		return true
 	}
