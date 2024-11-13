@@ -44,7 +44,8 @@ func main() {
 
 	if isTerminal(os.Stdin) {
 		destIdx := chooseDestination(cfg.Destinations)
-		if destIdx >= uint8(len(cfg.Destinations)) {
+		qtd := len(cfg.Destinations)
+		if qtd < 255 && destIdx >= uint8(qtd) {
 			os.Exit(0)
 		}
 		dest = cfg.Destinations[destIdx]
@@ -126,5 +127,10 @@ func chooseDestination(destinations []config.Destination) uint8 {
 
 	menu.Display()
 
-	return uint8(menu.CursorPos)
+	if menu.CursorPos < 0 || menu.CursorPos > 255 {
+		fmt.Printf("error choosing destination: %d\n", menu.CursorPos)
+		os.Exit(1)
+	}
+
+	return uint8(menu.CursorPos) // #nosec G115
 }
