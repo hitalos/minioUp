@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"os"
@@ -20,48 +21,48 @@ var (
 
 type (
 	Config struct {
-		Port         string        `yaml:"port" validate:"required,hostname_port"`
-		Endpoint     string        `yaml:"endpoint" validate:"required,hostname|hostname_port"`
-		Secure       bool          `yaml:"secure"`
-		AccessKey    string        `yaml:"accessKey" validate:"required"`
-		SecretKey    string        `yaml:"secretKey" validate:"required"`
-		Destinations []Destination `yaml:"destinations" validate:"required,dive"`
-		AllowedHosts []string      `yaml:"allowedHosts" validate:"dive,hostname_port|hostname"`
-		URLPrefix    string        `yaml:"urlPrefix"`
-		Auth         Auth          `yaml:"auth"`
+		Port         string        `yaml:"port" json:"port" validate:"required,hostname_port"`
+		Endpoint     string        `yaml:"endpoint" json:"endpoint" validate:"required,hostname|hostname_port"`
+		Secure       bool          `yaml:"secure" json:"secure"`
+		AccessKey    string        `yaml:"accessKey" json:"accessKey" validate:"required"`
+		SecretKey    string        `yaml:"secretKey" json:"secretKey" validate:"required"`
+		Destinations []Destination `yaml:"destinations" json:"destinations" validate:"required,dive"`
+		AllowedHosts []string      `yaml:"allowedHosts,omitempty" json:"allowedHosts,omitempty" validate:"dive,hostname_port|hostname"`
+		URLPrefix    string        `yaml:"urlPrefix,omitempty" json:"urlPrefix,omitempty"`
+		Auth         Auth          `yaml:"auth" json:"auth"`
 	}
 
 	Auth struct {
-		Driver string            `yaml:"driver"`
-		Params map[string]string `yaml:"params"`
+		Driver string            `yaml:"driver" json:"driver"`
+		Params map[string]string `yaml:"params" json:"params"`
 	}
 	Destination struct {
-		Name         string           `yaml:"name" validate:"required"`
-		Bucket       string           `yaml:"bucket" validate:"required"`
-		Prefix       string           `yaml:"prefix"`
-		AllowedRoles []string         `yaml:"allowedRoles"`
-		AllowedTypes []string         `yaml:"allowedTypes"`
-		Fields       map[string]Field `yaml:"fields" validate:"dive"`
-		WebHook      *WebHook         `yaml:"webhook"`
-		Model        string           `yaml:"model"`
+		Name         string           `yaml:"name" json:"name" validate:"required"`
+		Bucket       string           `yaml:"bucket" json:"bucket" validate:"required"`
+		Prefix       string           `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+		AllowedRoles []string         `yaml:"allowedRoles,omitempty" json:"allowedRoles,omitempty"`
+		AllowedTypes []string         `yaml:"allowedTypes,omitempty" json:"allowedTypes,omitempty"`
+		Fields       map[string]Field `yaml:"fields,omitempty" json:"fields,omitempty" validate:"dive"`
+		WebHook      *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
+		Model        string           `yaml:"model,omitempty" json:"model,omitempty"`
 		modelTmpl    *template.Template
 	}
 
 	Field struct {
-		Type        string         `yaml:"type"`
-		IsRequired  bool           `yaml:"required"`
-		Value       string         `yaml:"value"`
-		Description string         `yaml:"description" validate:"required"`
-		Pattern     string         `yaml:"pattern"`
-		regex       *regexp.Regexp `yaml:"-"`
-		Example     string         `yaml:"example"`
+		Type        string `yaml:"type,omitempty" json:"type,omitempty"`
+		IsRequired  bool   `yaml:"required,omitempty" json:"required,omitempty"`
+		Value       string `yaml:"value,omitempty" json:"value,omitempty"`
+		Description string `yaml:"description" json:"description" validate:"required"`
+		Pattern     string `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+		regex       *regexp.Regexp
+		Example     string `yaml:"example,omitempty" json:"example,omitempty"`
 	}
 
 	WebHook struct {
-		URL     string            `yaml:"url" validate:"required,url"`
-		Method  string            `yaml:"method"`
-		Headers map[string]string `yaml:"headers"`
-		Fields  map[string]string `yaml:"fields"`
+		URL     string            `yaml:"url" json:"url" validate:"required,url"`
+		Method  string            `yaml:"method,omitempty" json:"method,omitempty"`
+		Headers map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`
+		Fields  map[string]string `yaml:"fields,omitempty" json:"fields,omitempty"`
 	}
 )
 
@@ -160,4 +161,26 @@ func (c *Config) Parse(configFile string) error {
 	}
 
 	return nil
+}
+
+func (c Config) ToJSON() string {
+	b, err := json.Marshal(c)
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(b)
+}
+
+func (c Config) ToYAML() string {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(b)
+}
+
+func (c Config) String() string {
+	return c.ToYAML()
 }

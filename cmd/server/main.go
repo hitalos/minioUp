@@ -76,6 +76,8 @@ func main() {
 			r.Get("/form", handlers.ShowUploadForm(cfg))
 			r.Post("/upload", handlers.ProcessUploadForm(cfg))
 			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
+
+			r.With(middlewares.HasRole("admin")).Get("/config", handlers.ShowConfig(cfg))
 		})
 
 		r.Handle("/assets/*", public.Handler)

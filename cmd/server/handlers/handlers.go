@@ -267,3 +267,15 @@ func hitWebHook(dest config.Destination) error {
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("OK"))
 }
+
+func ShowConfig(cfg config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Accept") == "application/json" {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(cfg.ToJSON()))
+			return
+		}
+		w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
+		_, _ = w.Write([]byte(cfg.String()))
+	}
+}
