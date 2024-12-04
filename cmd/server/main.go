@@ -29,13 +29,19 @@ import (
 var (
 	configFile = flag.String("c", "config.yml", "Config file")
 	level      = new(slog.LevelVar)
-	log        = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level:     level,
-		AddSource: strings.ToLower(os.Getenv("LOG_LEVEL")) == "debug",
+	log        = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
 	}))
 )
 
 func main() {
+	if os.Getenv("ENV") == "dev" {
+		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level:     level,
+			AddSource: strings.ToLower(os.Getenv("LOG_LEVEL")) == "debug",
+		}))
+	}
+
 	slog.SetDefault(log)
 	flag.Parse()
 
