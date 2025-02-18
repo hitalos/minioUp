@@ -35,14 +35,7 @@ var (
 )
 
 func main() {
-	if os.Getenv("ENV") == "dev" {
-		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level:     level,
-			AddSource: strings.ToLower(os.Getenv("LOG_LEVEL")) == "debug",
-		}))
-	}
-
-	slog.SetDefault(log)
+	setLogger()
 	flag.Parse()
 
 	cfg := config.Config{}
@@ -65,32 +58,7 @@ func main() {
 	}
 
 	r := chi.NewMux()
-	r.NotFound(handlers.NotFoundHandler)
-
-	r.Route(cfg.URLPrefix+"/", func(r chi.Router) {
-		r.Use(middleware.RealIP)
-		r.Use(middleware.Compress(6))
-		r.Use(middleware.Logger)
-		r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
-		r.Use(middlewares.StripPrefix(cfg.URLPrefix))
-
-		r.Route("/", func(r chi.Router) {
-			r.Use(auth.NewAuthenticator(cfg))
-
-			r.Get("/", handlers.Index(cfg))
-			r.Post("/form", handlers.ShowUploadForm(cfg))
-			r.Get("/form", handlers.ShowUploadForm(cfg))
-			r.Post("/upload", handlers.ProcessUploadForm(cfg))
-			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
-
-			r.With(middlewares.HasRole("admin")).Get("/config", handlers.ShowConfig(cfg))
-		})
-
-		r.Handle("/assets/*", public.Handler)
-	})
-
-	r.Get("/healthz", handlers.HealthCheck)
-	r.Handle("/metrics", promhttp.Handler())
+	setRoutes(r, cfg)
 
 	s := http.Server{
 		Addr:         cfg.Port,
@@ -113,6 +81,48 @@ func main() {
 	<-stopCh
 
 	shutdown(&s)
+}
+
+func setLogger() {
+	if os.Getenv("ENV") == "dev" {
+		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level:     level,
+			AddSource: strings.ToLower(os.Getenv("LOG_LEVEL")) == "debug",
+		}))
+	}
+
+	slog.SetDefault(log)
+}
+
+func setRoutes(r *chi.Mux, cfg config.Config) {
+	r.Route(cfg.URLPrefix+"/", func(r chi.Router) {
+		setDefaultMiddlewares(r, cfg)
+
+		r.Route("/", func(r chi.Router) {
+			r.Use(auth.NewAuthenticator(cfg))
+
+			r.Get("/", handlers.Index(cfg))
+			r.Post("/form", handlers.ShowUploadForm(cfg))
+			r.Get("/form", handlers.ShowUploadForm(cfg))
+			r.Post("/upload", handlers.ProcessUploadForm(cfg))
+			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
+
+			r.With(middlewares.HasRole("admin")).Get("/config", handlers.ShowConfig(cfg))
+		})
+
+		r.Handle("/assets/*", public.Handler)
+	})
+
+	r.Get("/healthz", handlers.HealthCheck)
+	r.Handle("/metrics", promhttp.Handler())
+}
+
+func setDefaultMiddlewares(r chi.Router, cfg config.Config) {
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Compress(6))
+	r.Use(middleware.Logger)
+	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
+	r.Use(middlewares.StripPrefix(cfg.URLPrefix))
 }
 
 func shutdown(server *http.Server) {
