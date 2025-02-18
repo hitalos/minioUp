@@ -44,8 +44,7 @@ type (
 		AllowedTypes []string         `yaml:"allowedTypes,omitempty" json:"allowedTypes,omitempty"`
 		Fields       map[string]Field `yaml:"fields,omitempty" json:"fields,omitempty" validate:"dive"`
 		WebHook      *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
-		Model        string           `yaml:"model,omitempty" json:"model,omitempty"`
-		modelTmpl    *template.Template
+		Model        *TemplateString  `yaml:"model,omitempty" json:"model,omitempty"`
 	}
 
 	Field struct {
@@ -55,7 +54,13 @@ type (
 		Description string `yaml:"description" json:"description" validate:"required"`
 		Pattern     string `yaml:"pattern,omitempty" json:"pattern,omitempty"`
 		regex       *regexp.Regexp
-		Example     string `yaml:"example,omitempty" json:"example,omitempty"`
+		Example     *TemplateString `yaml:"example,omitempty" json:"example,omitempty"`
+	}
+
+	TemplateString struct {
+		params   any
+		template *template.Template
+		Value    string `yaml:"value" json:"value" validate:"required"`
 	}
 
 	WebHook struct {
@@ -66,6 +71,24 @@ type (
 	}
 )
 
+func (t *TemplateString) UnmarshalYAML(v *yaml.Node) error {
+	var err error
+	t.Value = v.Value
+	t.template, err = template.New("").Funcs(sprig.GenericFuncMap()).Parse(t.Value)
+
+	return err
+}
+
+func (t TemplateString) String() string {
+	buf := new(bytes.Buffer)
+	if err := t.template.Execute(buf, t.params); err != nil {
+		slog.Error("error executing template", "error", err)
+		return t.Value
+	}
+
+	return buf.String()
+}
+
 func (f Field) Validate() bool {
 	if f.Pattern == "" {
 		return true
@@ -75,17 +98,8 @@ func (f Field) Validate() bool {
 }
 
 func (d Destination) MountName(params map[string]string) string {
-	if d.Model == "" {
-		return filepath.Base(params["originalFilename"])
-	}
-
-	str := new(bytes.Buffer)
-	if err := d.modelTmpl.Execute(str, params); err != nil {
-		slog.Error("error executing template to mount filename", "error", err)
-		return filepath.Base(params["originalFilename"])
-	}
-
-	return str.String()
+	d.Model.params = params
+	return d.Model.String()
 }
 
 func (c *Config) Load(configFile string) error {
@@ -138,14 +152,6 @@ func (c *Config) Parse(configFile string) error {
 
 		if len(d.Fields) == 0 {
 			continue
-		}
-
-		if d.Model != "" {
-			tmpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(d.Model)
-			if err != nil {
-				return errors.New(err.Error() + ` on model ofdestination "` + d.Name + `"`)
-			}
-			c.Destinations[i].modelTmpl = tmpl
 		}
 
 		for fieldName, f := range d.Fields {

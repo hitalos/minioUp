@@ -52,7 +52,7 @@ func Upload(dest config.Destination, r io.Reader, filename string, size int64, p
 	options.UserMetadata["originalFilename"] = originalFilename
 
 	path := filepath.Join(dest.Prefix, originalFilename)
-	if dest.Model != "" {
+	if dest.Model.Value != "" {
 		path = filepath.Join(dest.Prefix, dest.MountName(options.UserMetadata))
 	}
 
