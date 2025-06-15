@@ -7,7 +7,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
 
-FROM docker.io/library/alpine:3.21
+FROM docker.io/library/alpine:3.22
 
 WORKDIR /app
 COPY --from=builder /app/dist/minioUpServer ./
