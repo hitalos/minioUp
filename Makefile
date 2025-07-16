@@ -43,10 +43,13 @@ sec:
 
 CONTAINER_RUNTINE=$(shell [ -e /usr/bin/podman ] && echo podman || echo docker)
 container-image:
-	$(CONTAINER_RUNTINE) build -t minioup .
+	$(CONTAINER_RUNTINE) image build -t docker.io/$(USER)/minioup:latest .
+
+container-image-push:
+	$(CONTAINER_RUNTINE) image push docker.io/$(USER)/minioup:latest
 
 container-image-sec:
-	trivy image minioup
-	grype minioup
+	trivy image docker.io/$(USER)/minioup:latest
+	grype docker.io/$(USER)/minioup:latest
 
 .PHONY: all clean container-image container-image-sec dist/minioUp dist/minioUpServer install lint sec
