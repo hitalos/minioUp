@@ -2,10 +2,12 @@ package minioClient
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"mime"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -44,6 +46,22 @@ func UploadMultiple(dest config.Destination, filepaths []string, params []map[st
 func Upload(dest config.Destination, r io.Reader, filename string, size int64, params map[string]string) error {
 	originalFilename := filepath.Base(filename)
 
+	if len(dest.AllowedTypes) > 0 {
+		ext := filepath.Ext(originalFilename)[1:]
+		if !slices.Contains(dest.AllowedTypes, ext) {
+			return fmt.Errorf("invalid file type: %q", ext)
+		}
+	}
+
+	for k, f := range dest.Fields {
+		f.Value = params[k]
+		if f.Validate() {
+			continue
+		}
+
+		return fmt.Errorf("invalid value for field %q: %s", k, f.Value)
+	}
+
 	options := minio.PutObjectOptions{
 		UserMetadata: params,
 		ContentType:  mime.TypeByExtension(filepath.Ext(filename)),
@@ -52,7 +70,7 @@ func Upload(dest config.Destination, r io.Reader, filename string, size int64, p
 	options.UserMetadata["originalFilename"] = originalFilename
 
 	path := filepath.Join(dest.Prefix, originalFilename)
-	if dest.Model.Value != "" {
+	if dest.Model != nil && dest.Model.Value != "" {
 		path = filepath.Join(dest.Prefix, dest.MountName(options.UserMetadata))
 	}
 

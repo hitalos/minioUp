@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -148,25 +147,10 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 		}
 		_ = r.Body.Close()
 
-		if len(dest.AllowedTypes) > 0 {
-			ext := filepath.Ext(fh.Filename)[1:]
-			if !slices.Contains[[]string](dest.AllowedTypes, ext) {
-				ErrorHandler(fmt.Sprintf("Invalid file type: %q", ext), err, w, http.StatusBadRequest)
-				return
-			}
-		}
-
-		params := make(map[string]string, 0)
+		params := make(map[string]string, len(dest.Fields))
 		if len(dest.Fields) != 0 {
-			for k, f := range dest.Fields {
-				f.Value = r.PostFormValue(k)
-				if f.Validate() {
-					params[k] = f.Value
-					continue
-				}
-
-				ErrorHandler(fmt.Sprintf("Invalid value for field: %s=%q", k, f.Value), err, w, http.StatusBadRequest)
-				return
+			for k := range dest.Fields {
+				params[k] = r.PostFormValue(k)
 			}
 		}
 
