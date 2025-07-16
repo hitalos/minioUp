@@ -53,6 +53,7 @@ destinations:
     prefix: "2024/03" # optional
     name: "uploads - march" # will be showed as "uploads - march" on menu
     allowedTypes: ["jpg", "png", "pdf"]
+    maxResultLength: 10 # max length of list (latest)
     template: # optional
       model: "{{ lower (index . 0) }}"
       pattern: "regex pattern" # optional

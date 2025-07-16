@@ -17,6 +17,7 @@ import (
 
 var (
 	ErrWrongFileExt = errors.New("wrong file extension")
+	MAX_RESULT_LEN  = 10
 )
 
 type (
@@ -37,14 +38,15 @@ type (
 		Params map[string]string `yaml:"params" json:"params"`
 	}
 	Destination struct {
-		Name         string           `yaml:"name" json:"name" validate:"required"`
-		Bucket       string           `yaml:"bucket" json:"bucket" validate:"required"`
-		Prefix       string           `yaml:"prefix,omitempty" json:"prefix,omitempty"`
-		AllowedRoles []string         `yaml:"allowedRoles,omitempty" json:"allowedRoles,omitempty"`
-		AllowedTypes []string         `yaml:"allowedTypes,omitempty" json:"allowedTypes,omitempty"`
-		Fields       map[string]Field `yaml:"fields,omitempty" json:"fields,omitempty" validate:"dive"`
-		WebHook      *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
-		Model        *TemplateString  `yaml:"model,omitempty" json:"model,omitempty"`
+		Name            string           `yaml:"name" json:"name" validate:"required"`
+		Bucket          string           `yaml:"bucket" json:"bucket" validate:"required"`
+		Prefix          string           `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+		AllowedRoles    []string         `yaml:"allowedRoles,omitempty" json:"allowedRoles,omitempty"`
+		AllowedTypes    []string         `yaml:"allowedTypes,omitempty" json:"allowedTypes,omitempty"`
+		Fields          map[string]Field `yaml:"fields,omitempty" json:"fields,omitempty" validate:"dive"`
+		WebHook         *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
+		Model           *TemplateString  `yaml:"model,omitempty" json:"model,omitempty"`
+		MaxResultLength int              `yaml:"maxResultLength,omitempty" json:"maxResultLength,omitempty" validate:"omitempty,min=1,max=1000"`
 	}
 
 	Field struct {
@@ -124,6 +126,10 @@ func (c *Config) Load(configFile string) error {
 	for i := range c.Destinations {
 		if c.Destinations[i].Name == "" {
 			c.Destinations[i].Name = c.Destinations[i].Bucket
+		}
+
+		if c.Destinations[i].MaxResultLength == 0 {
+			c.Destinations[i].MaxResultLength = MAX_RESULT_LEN
 		}
 	}
 

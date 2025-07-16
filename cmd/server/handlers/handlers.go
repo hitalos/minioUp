@@ -17,7 +17,6 @@ import (
 
 const (
 	MAX_UPLOAD_SIZE = 16 << 20
-	MAX_RESULT_LEN  = 10
 )
 
 type (
@@ -119,7 +118,7 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 		}
 
 		sort.Sort(d.List)
-		d.List = d.List[0:min(MAX_RESULT_LEN, len(d.List))]
+		d.List = d.List[0:min(dest.MaxResultLength, len(d.List))]
 
 		if err := templates.Exec(w, "form.html", d); err != nil {
 			ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
