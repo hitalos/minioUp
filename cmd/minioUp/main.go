@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/nexidian/gocliselect"
 
@@ -18,7 +19,7 @@ var (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage of %s:\n%[1]s [-c config.yml] <file1> <params1> [file2] [params2]…\nor\n%[1]s -l [-c config.yml]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n%[1]s [-c config.yml] <file1> <param1> <value1> <param2> <value2>…\nor\n%[1]s -l [-c config.yml]\n", os.Args[0])
 }
 
 func main() {
@@ -56,42 +57,53 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !*onlyListing {
-		if len(flag.Args()) == 0 {
-			usage()
-			os.Exit(1)
-		}
-
-		upload(dest)
-		return
+	if *onlyListing {
+		list(dest)
 	}
 
-	list(dest)
+	if len(flag.Args()) == 0 {
+		usage()
+		os.Exit(1)
+	}
+
+	upload(dest)
 }
 
 func upload(dest config.Destination) {
-	if len(flag.Args())%2 != 0 {
-		fmt.Println(`Provide an even number of arguments: <file1> "<param 1>"`)
+	if (len(flag.Args())-1)%2 != 0 {
+		fmt.Println(`Provide an even number of arguments: <file1> "<param 1>" "<value 1>" <param 2> "<value 2>"…`)
 		os.Exit(1)
 	}
 
-	filepaths, params := []string{}, make([]map[string]string, 0)
-	for i, p := range flag.Args() {
-		if i%2 == 0 {
-			filepaths = append(filepaths, p)
-			continue
+	f, err := os.Open(flag.Args()[0])
+	if err != nil {
+		fmt.Printf("Error opening file %s: %v\n", flag.Args()[0], err)
+		os.Exit(1)
+	}
+	defer func() { _ = f.Close() }()
+
+	info, err := f.Stat()
+	if err != nil {
+		fmt.Printf("Error getting file info for %s: %v\n", flag.Args()[0], err)
+		os.Exit(1)
+	}
+	if info.IsDir() {
+		fmt.Printf("Error: %s is a directory, not a file\n", flag.Args()[0])
+		os.Exit(1)
+	}
+
+	filename := filepath.Base(flag.Args()[0])
+	params := make(map[string]string, 0)
+	for i := 1; i < len(flag.Args()); i += 2 {
+		if i+1 >= len(flag.Args()) {
+			fmt.Printf("Error: missing value for parameter %s\n", flag.Args()[i])
+			os.Exit(1)
 		}
-
-		params = append(params, map[string]string{"filename": p})
-	}
-
-	if len(filepaths) == 0 {
-		fmt.Println("Provide at least one file")
-		os.Exit(1)
+		params[flag.Args()[i]] = flag.Args()[i+1]
 	}
 
 	fmt.Println("Uploading files…")
-	if err := minioClient.UploadMultiple(dest, filepaths, params); err != nil {
+	if err := minioClient.Upload(dest, f, filename, info.Size(), params); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
