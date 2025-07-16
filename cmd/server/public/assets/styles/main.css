@@ -11,7 +11,12 @@ p {
 }
 
 a {
+	color: black;
 	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
 }
 
 h2 {
@@ -138,6 +143,11 @@ a.btn:focus {
 
 .btn.delete:hover {
 	background-color: #600707;
+}
+
+.btn.copy-link:hover {
+	background-color: lightgray;
+
 }
 
 table {

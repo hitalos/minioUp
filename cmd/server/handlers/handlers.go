@@ -95,13 +95,15 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 		type (
 			data struct {
 				Auth           map[string]string
+				Endpoint       string
+				Secure         bool
 				Destination    config.Destination
 				DestinationIdx int
 				List           fileInfoList
 			}
 		)
 		username := r.Header.Get("X-Forwarded-Preferred-Username")
-		d := data{map[string]string{"Username": username}, dest, destIdx, make(fileInfoList, 0)}
+		d := data{map[string]string{"Username": username}, cfg.Endpoint, cfg.Secure, dest, destIdx, make(fileInfoList, 0)}
 
 		list, err := minioClient.List(dest)
 		if err != nil {
