@@ -21,7 +21,7 @@ func LoadTranslations() {
 		slog.Error("error reading translations", "error", err)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := json.NewDecoder(f).Decode(&translations); err != nil {
 		slog.Error("error decoding translations", "error", err)

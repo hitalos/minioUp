@@ -241,7 +241,7 @@ func hitWebHook(dest config.Destination) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	slog.Info("webhook response", "status", resp.StatusCode)
 

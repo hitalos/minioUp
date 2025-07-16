@@ -121,7 +121,7 @@ func isTerminal(f *os.File) bool {
 func chooseDestination(destinations []config.Destination) uint8 {
 	menu := gocliselect.NewMenu("Choose a destination")
 	for i, d := range destinations {
-		menu.AddItem(cmp.Or[string](d.Name, d.Bucket), fmt.Sprintf("%d", i))
+		menu.AddItem(cmp.Or(d.Name, d.Bucket), fmt.Sprintf("%d", i))
 	}
 	menu.AddItem("Cancel", fmt.Sprintf("%d", len(destinations)))
 
