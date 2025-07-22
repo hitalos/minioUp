@@ -50,8 +50,8 @@ type (
 		Fields          map[string]Field `yaml:"fields,omitempty" json:"fields,omitempty" validate:"dive"`
 		WebHook         *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
 		Model           *TemplateString  `yaml:"model,omitempty" json:"model,omitempty"`
-		MaxResultLength int              `yaml:"maxResultLength,omitempty" json:"maxResultLength,omitempty" validate:"omitempty,min=1,max=1000"`
-		MaxUploadSize   int64            `yaml:"maxUploadSize,omitempty" json:"maxUploadSize,omitempty" validate:"omitempty,min=1"`
+		MaxResultLength int              `yaml:"maxResultLength,omitempty" json:"maxResultLength,omitempty" validate:"min=1,max=1000"`
+		MaxUploadSize   int64            `yaml:"maxUploadSize,omitempty" json:"maxUploadSize,omitempty" validate:"min=1024"`
 	}
 
 	Field struct {
