@@ -15,10 +15,6 @@ import (
 	"github.com/hitalos/minioUp/services/minioClient"
 )
 
-const (
-	MAX_UPLOAD_SIZE = 16 << 20
-)
-
 type (
 	fileInfo struct {
 		Name     string
@@ -137,7 +133,7 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 		}
 		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
-		if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
+		if err := r.ParseMultipartForm(dest.MaxUploadSize); err != nil {
 			ErrorHandler("Error parsing uploaded file", err, w, http.StatusUnprocessableEntity)
 			return
 		}

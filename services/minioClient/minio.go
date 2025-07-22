@@ -62,6 +62,10 @@ func Upload(dest config.Destination, r io.Reader, filename string, size int64, p
 		return fmt.Errorf("invalid value for field %q: %s", k, f.Value)
 	}
 
+	if size > int64(dest.MaxUploadSize) {
+		return fmt.Errorf("file size exceeds the maximum allowed size of %d bytes", dest.MaxUploadSize)
+	}
+
 	options := minio.PutObjectOptions{
 		UserMetadata: params,
 		ContentType:  mime.TypeByExtension(filepath.Ext(filename)),

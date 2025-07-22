@@ -15,9 +15,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	MAX_RESULT_LEN = 10
+	MAX_SIZE_LIMIT = 100 << 20 // 100 MB
+)
+
 var (
 	ErrWrongFileExt = errors.New("wrong file extension")
-	MAX_RESULT_LEN  = 10
 )
 
 type (
@@ -47,6 +51,7 @@ type (
 		WebHook         *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
 		Model           *TemplateString  `yaml:"model,omitempty" json:"model,omitempty"`
 		MaxResultLength int              `yaml:"maxResultLength,omitempty" json:"maxResultLength,omitempty" validate:"omitempty,min=1,max=1000"`
+		MaxUploadSize   int64            `yaml:"maxUploadSize,omitempty" json:"maxUploadSize,omitempty" validate:"omitempty,min=1"`
 	}
 
 	Field struct {
@@ -130,6 +135,10 @@ func (c *Config) Load(configFile string) error {
 
 		if c.Destinations[i].MaxResultLength == 0 {
 			c.Destinations[i].MaxResultLength = MAX_RESULT_LEN
+		}
+
+		if c.Destinations[i].MaxUploadSize == 0 {
+			c.Destinations[i].MaxUploadSize = MAX_SIZE_LIMIT
 		}
 	}
 

@@ -5,7 +5,16 @@
 	<form action="{{ urlPrefix }}/upload" method="POST" enctype="multipart/form-data" class="upload">
 		<input type="hidden" name="destination" value="{{ .DestinationIdx }}">
 		{{ with .Destination -}}
-			<input type="file" name="file" id="file" {{ with .AllowedTypes }}accept=".{{ . | join ", ." }}"{{ end }} required>
+			<input type="file" name="file" id="file" maxlength="{{ .MaxUploadSize }}" {{ with .AllowedTypes }}accept=".{{ . | join ", ." }}"{{ end }} required>
+
+			{{ $mul := "Kb" }}
+			{{ $max := (div .MaxUploadSize 1024) }}
+			{{ if ge $max 1024 }}
+				{{ $mul = "Mb" }}
+				{{ $max = (div $max 1024) }}
+			{{ end }}
+			(Max. {{ $max }} {{ $mul }})
+
 			{{ with .Fields }}
 				{{ range $name, $f := . }}
 					{{ if ne $f.Description "" }}
