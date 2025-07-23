@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -22,6 +23,8 @@ const (
 
 var (
 	ErrWrongFileExt = errors.New("wrong file extension")
+
+	mu = new(sync.RWMutex)
 )
 
 type (
@@ -184,7 +187,10 @@ func (c *Config) Parse(configFile string) error {
 	return nil
 }
 
-func (c Config) ToJSON() string {
+func (c *Config) ToJSON() string {
+	mu.RLock()
+	defer mu.RUnlock()
+
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err.Error()
@@ -193,7 +199,10 @@ func (c Config) ToJSON() string {
 	return string(b)
 }
 
-func (c Config) ToYAML() string {
+func (c *Config) ToYAML() string {
+	mu.RLock()
+	defer mu.RUnlock()
+
 	b, err := yaml.Marshal(c)
 	if err != nil {
 		return err.Error()
@@ -204,4 +213,17 @@ func (c Config) ToYAML() string {
 
 func (c Config) String() string {
 	return c.ToYAML()
+}
+
+func (c *Config) ReloadDestinations(configFile string) error {
+	newCfg := &Config{}
+	if err := newCfg.Parse(configFile); err != nil {
+		return err
+	}
+
+	mu.Lock()
+	c.Destinations = newCfg.Destinations
+	mu.Unlock()
+
+	return nil
 }

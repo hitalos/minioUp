@@ -38,7 +38,7 @@ func main() {
 	setLogger()
 	flag.Parse()
 
-	cfg := config.Config{}
+	cfg := &config.Config{}
 	if err := cfg.Parse(*configFile); err != nil {
 		if os.IsNotExist(err) {
 			slog.Error("config file not found. Example at: https://github.com/hitalos/minioUp")
@@ -52,7 +52,7 @@ func main() {
 	i18n.LoadTranslations()
 	templates.SetURLPrefix(cfg.URLPrefix)
 
-	if err := minioClient.Init(cfg); err != nil {
+	if err := minioClient.Init(*cfg); err != nil {
 		slog.Error("error on initialize minio client", "error", err)
 		os.Exit(1)
 	}
@@ -60,7 +60,7 @@ func main() {
 	r := chi.NewMux()
 	setRoutes(r, cfg)
 
-	s := http.Server{
+	s := &http.Server{
 		Addr:         cfg.Port,
 		Handler:      r,
 		IdleTimeout:  time.Second * 30,
@@ -68,20 +68,18 @@ func main() {
 		WriteTimeout: time.Second * 30,
 	}
 
-	go func() {
-		slog.Info("Listening on", "port", s.Addr)
-		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("error trying to start server", "error", err)
-			os.Exit(0)
-		}
-		slog.Info("Server stopped gracefully")
-	}()
+	reloadCh := make(chan os.Signal, 1)
+	signal.Notify(reloadCh, syscall.SIGHUP)
+	go reloadConfig(reloadCh, cfg, *configFile)
+
+	go listen(s)
 
 	stopCh := make(chan os.Signal, 1)
 	signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	<-stopCh
 
-	shutdown(&s)
+	close(reloadCh)
+	shutdown(s)
 }
 
 func setLogger() {
@@ -95,12 +93,12 @@ func setLogger() {
 	slog.SetDefault(log)
 }
 
-func setRoutes(r *chi.Mux, cfg config.Config) {
+func setRoutes(r *chi.Mux, cfg *config.Config) {
 	r.Route(cfg.URLPrefix+"/", func(r chi.Router) {
 		setDefaultMiddlewares(r, cfg)
 
 		r.Route("/", func(r chi.Router) {
-			r.Use(auth.NewAuthenticator(cfg))
+			r.Use(auth.NewAuthenticator(*cfg))
 
 			r.Get("/", handlers.Index(cfg))
 			r.Post("/form", handlers.ShowUploadForm(cfg))
@@ -108,7 +106,12 @@ func setRoutes(r *chi.Mux, cfg config.Config) {
 			r.Post("/upload", handlers.ProcessUploadForm(cfg))
 			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
 
-			r.With(middlewares.HasRole("admin")).Get("/config", handlers.ShowConfig(cfg))
+			r.Route("/config", func(r chi.Router) {
+				r.Use(middlewares.HasRole("admin"))
+
+				r.Get("/", handlers.ShowConfig(cfg))
+				r.Get("/reload", handlers.ReloadConfig(cfg, *configFile))
+			})
 		})
 
 		r.Handle("/assets/*", public.Handler)
@@ -118,12 +121,21 @@ func setRoutes(r *chi.Mux, cfg config.Config) {
 	r.Handle("/metrics", promhttp.Handler())
 }
 
-func setDefaultMiddlewares(r chi.Router, cfg config.Config) {
+func setDefaultMiddlewares(r chi.Router, cfg *config.Config) {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Compress(6))
 	r.Use(middleware.Logger)
 	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))
 	r.Use(middlewares.StripPrefix(cfg.URLPrefix))
+}
+
+func listen(s *http.Server) {
+	slog.Info("Listening on", "port", s.Addr, "PID", os.Getpid())
+	if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("error trying to start server", "error", err)
+		os.Exit(0)
+	}
+	slog.Info("Server stopped gracefully")
 }
 
 func shutdown(server *http.Server) {
@@ -135,4 +147,18 @@ func shutdown(server *http.Server) {
 	}
 
 	slog.Info("server shutdowned")
+}
+
+func reloadConfig(reloadCh chan os.Signal, cfg *config.Config, configFile string) {
+	for range reloadCh {
+		if err := cfg.ReloadDestinations(configFile); err != nil {
+			slog.Error("error reloading config", "error", err)
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
+		slog.Info("config destinations reloaded", "method", "signal")
+
+		time.Sleep(10 * time.Second)
+	}
 }

@@ -30,7 +30,7 @@ func (il fileInfoList) Len() int           { return len(il) }
 func (il fileInfoList) Swap(i, j int)      { il[i], il[j] = il[j], il[i] }
 func (il fileInfoList) Less(i, j int) bool { return il[i].LastMod.Unix() > il[j].LastMod.Unix() }
 
-func filterDestinationsByRoles(r *http.Request, cfg config.Config) []config.Destination {
+func filterDestinationsByRoles(r *http.Request, cfg *config.Config) []config.Destination {
 	if cfg.Auth.Driver == "" {
 		return cfg.Destinations
 	}
@@ -60,7 +60,7 @@ func filterDestinationsByRoles(r *http.Request, cfg config.Config) []config.Dest
 	return dests
 }
 
-func Index(cfg config.Config) http.HandlerFunc {
+func Index(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dests := filterDestinationsByRoles(r, cfg)
 		if len(dests) > 1 {
@@ -78,7 +78,7 @@ func Index(cfg config.Config) http.HandlerFunc {
 	}
 }
 
-func ShowUploadForm(cfg config.Config) http.HandlerFunc {
+func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		destIdx, err := strconv.Atoi(r.FormValue("destination"))
 		if err != nil {
@@ -124,7 +124,7 @@ func ShowUploadForm(cfg config.Config) http.HandlerFunc {
 	}
 }
 
-func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
+func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		destIdx, err := strconv.Atoi(r.PostFormValue("destination"))
 		if err != nil {
@@ -168,7 +168,7 @@ func ProcessUploadForm(cfg config.Config) http.HandlerFunc {
 	}
 }
 
-func Delete(cfg config.Config) http.HandlerFunc {
+func Delete(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		destIdx, err := strconv.Atoi(r.PathValue("destIdx"))
 		if err != nil {
@@ -249,7 +249,7 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("OK"))
 }
 
-func ShowConfig(cfg config.Config) http.HandlerFunc {
+func ShowConfig(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Accept") == "application/json" {
 			w.Header().Set("Content-Type", "application/json")
@@ -258,5 +258,18 @@ func ShowConfig(cfg config.Config) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
 		_, _ = w.Write([]byte(cfg.String()))
+	}
+}
+
+func ReloadConfig(cfg *config.Config, configFile string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := cfg.ReloadDestinations(configFile); err != nil {
+			ErrorHandler("Error reloading config", err, w, http.StatusBadRequest)
+			return
+		}
+
+		slog.Info("config destinations reloaded", "method", "request")
+
+		ShowConfig(cfg)(w, r)
 	}
 }
