@@ -43,7 +43,7 @@ func main() {
 
 	dest := cfg.Destinations[0]
 
-	if isTerminal(os.Stdin) {
+	if isTerminal(os.Stdin) && len(cfg.Destinations) > 1 {
 		destIdx := chooseDestination(cfg.Destinations)
 		qtd := len(cfg.Destinations)
 		if qtd < 255 && destIdx >= uint8(qtd) {
@@ -59,6 +59,7 @@ func main() {
 
 	if *onlyListing {
 		list(dest)
+		return
 	}
 
 	if len(flag.Args()) == 0 {
