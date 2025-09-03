@@ -151,6 +151,10 @@ func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 			}
 		}
 
+		if username := r.Header.Get("X-Forwarded-Preferred-Username"); username != "" {
+			params["uploadedBy"] = username
+		}
+
 		if err := minioClient.Upload(dest, file, fh.Filename, fh.Size, params); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 			return
