@@ -1,10 +1,10 @@
 all: dist/minioUp dist/minioUpServer
 
 dist/minioUp:
-	CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUp ./cmd/minioUp
+	CGO_ENABLED=0 go build -ldflags '-s -w' -trimpath -o ./dist/minioUp ./cmd/minioUp
 
 dist/minioUpServer:
-	CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
+	CGO_ENABLED=0 go build -ldflags '-s -w' -trimpath -o ./dist/minioUpServer ./cmd/server
 
 dev:
 	ENV=dev go run -tags dev -ldflags "-X github.com/hitalos/minioUp/cmd/server/i18n.defaultLocale=$(LANG)" ./cmd/server
