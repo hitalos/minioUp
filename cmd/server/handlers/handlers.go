@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -39,6 +40,7 @@ func filterDestinationsByRoles(r *http.Request, cfg *config.Config) []config.Des
 	for _, d := range cfg.Destinations {
 		if len(d.AllowedRoles) == 0 {
 			dests = append(dests, d)
+
 			continue
 		}
 
@@ -47,6 +49,7 @@ func filterDestinationsByRoles(r *http.Request, cfg *config.Config) []config.Des
 			for _, r := range r.Header.Values("X-Roles") {
 				if r == role {
 					toInclude = true
+
 					break
 				}
 			}
@@ -71,6 +74,7 @@ func Index(cfg *config.Config) http.HandlerFunc {
 			if err := templates.Exec(w, "index.html", d); err != nil {
 				ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
 			}
+
 			return
 		}
 		r.PostForm = url.Values{"destination": []string{"0"}}
@@ -83,6 +87,7 @@ func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 		destIdx, err := strconv.Atoi(r.FormValue("destination"))
 		if err != nil {
 			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
+
 			return
 		}
 
@@ -101,9 +106,10 @@ func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 		username := r.Header.Get("X-Forwarded-Preferred-Username")
 		d := data{map[string]string{"Username": username}, cfg.Endpoint, cfg.Secure, dest, destIdx, make(fileInfoList, 0)}
 
-		list, err := minioClient.List(dest)
+		list, err := minioClient.List(r.Context(), dest)
 		if err != nil {
 			ErrorHandler("Error getting file list", err, w, http.StatusInternalServerError)
+
 			return
 		}
 
@@ -129,17 +135,20 @@ func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 		destIdx, err := strconv.Atoi(r.PostFormValue("destination"))
 		if err != nil {
 			ErrorHandler("Error parsing form", err, w, http.StatusBadRequest)
+
 			return
 		}
 		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
 		if err := r.ParseMultipartForm(dest.MaxUploadSize); err != nil {
 			ErrorHandler("Error parsing uploaded file", err, w, http.StatusUnprocessableEntity)
+
 			return
 		}
 		file, fh, err := r.FormFile("file")
 		if err != nil {
 			ErrorHandler("Error getting uploaded file", err, w, http.StatusBadRequest)
+
 			return
 		}
 		_ = r.Body.Close()
@@ -155,8 +164,9 @@ func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 			params["uploadedBy"] = username
 		}
 
-		if err := minioClient.Upload(dest, file, fh.Filename, fh.Size, params); err != nil {
+		if err := minioClient.Upload(r.Context(), dest, file, fh.Filename, fh.Size, params); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
+
 			return
 		}
 		_ = file.Close()
@@ -165,7 +175,7 @@ func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 		w.WriteHeader(http.StatusSeeOther)
 
 		if dest.WebHook != nil {
-			if err := hitWebHook(dest); err != nil {
+			if err := hitWebHook(r.Context(), dest); err != nil {
 				slog.Error("Error sending webhook", "error", err, "webhook", dest.WebHook)
 			}
 		}
@@ -177,13 +187,15 @@ func Delete(cfg *config.Config) http.HandlerFunc {
 		destIdx, err := strconv.Atoi(r.PathValue("destIdx"))
 		if err != nil {
 			ErrorHandler("Invalid destination", err, w, http.StatusBadRequest)
+
 			return
 		}
 		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
 		filename, _ := url.PathUnescape(r.PathValue("filename"))
-		if err := minioClient.Delete(dest, filename); err != nil {
+		if err := minioClient.Delete(r.Context(), dest, filename); err != nil {
 			ErrorHandler("Error deleting file", err, w, http.StatusInternalServerError)
+
 			return
 		}
 
@@ -191,7 +203,7 @@ func Delete(cfg *config.Config) http.HandlerFunc {
 		w.WriteHeader(http.StatusSeeOther)
 
 		if dest.WebHook != nil {
-			if err := hitWebHook(dest); err != nil {
+			if err := hitWebHook(r.Context(), dest); err != nil {
 				slog.Error("Error sending webhook", "error", err, "webhook", dest.WebHook)
 			}
 		}
@@ -214,13 +226,13 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func hitWebHook(dest config.Destination) error {
+func hitWebHook(ctx context.Context, dest config.Destination) error {
 	method := http.MethodPost
 	if dest.WebHook.Method != "" {
 		method = dest.WebHook.Method
 	}
 
-	req, err := http.NewRequest(method, dest.WebHook.URL, nil)
+	req, err := http.NewRequestWithContext(ctx, method, dest.WebHook.URL, nil)
 	if err != nil {
 		return err
 	}
@@ -258,6 +270,7 @@ func ShowConfig(cfg *config.Config) http.HandlerFunc {
 		if r.Header.Get("Accept") == "application/json" {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(cfg.ToJSON()))
+
 			return
 		}
 		w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
@@ -269,6 +282,7 @@ func ReloadConfig(cfg *config.Config, configFile string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := cfg.ReloadDestinations(configFile); err != nil {
 			ErrorHandler("Error reloading config", err, w, http.StatusBadRequest)
+
 			return
 		}
 

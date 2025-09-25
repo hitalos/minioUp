@@ -79,6 +79,7 @@ func (cAuth CookieAuthenticator) New(params map[string]string) func(http.Handler
 			for _, path := range cAuth.skipPaths {
 				if strings.HasPrefix(r.URL.Path, path) {
 					next.ServeHTTP(w, r)
+
 					return
 				}
 			}
@@ -87,24 +88,29 @@ func (cAuth CookieAuthenticator) New(params map[string]string) func(http.Handler
 				switch r.URL.Path {
 				case "/auth/logout":
 					cAuth.logout(w, r)
+
 					return
 				case "/auth/login":
 					w.Header().Set("Location", cAuth.urlPrefix+"/")
 					w.WriteHeader(http.StatusSeeOther)
+
 					return
 				}
 
 				next.ServeHTTP(w, r)
+
 				return
 			}
 
 			if r.URL.Path == "/auth/login" {
 				if r.Method == http.MethodPost {
 					cAuth.processLogin(w, r)
+
 					return
 				}
 
 				cAuth.showLogin(w, r)
+
 				return
 			}
 
@@ -129,6 +135,7 @@ func (cAuth CookieAuthenticator) processLogin(w http.ResponseWriter, r *http.Req
 	if username == "" || password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		cAuth.showLogin(w, r)
+
 		return
 	}
 
@@ -137,6 +144,7 @@ func (cAuth CookieAuthenticator) processLogin(w http.ResponseWriter, r *http.Req
 		slog.Error("Error authenticating user")
 		w.WriteHeader(http.StatusUnauthorized)
 		cAuth.showLogin(w, r)
+
 		return
 	}
 
@@ -144,6 +152,7 @@ func (cAuth CookieAuthenticator) processLogin(w http.ResponseWriter, r *http.Req
 		slog.Error("Error authenticating user")
 		w.WriteHeader(http.StatusUnauthorized)
 		cAuth.showLogin(w, r)
+
 		return
 	}
 
@@ -151,6 +160,7 @@ func (cAuth CookieAuthenticator) processLogin(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		slog.Error("Error creating session", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -160,6 +170,7 @@ func (cAuth CookieAuthenticator) processLogin(w http.ResponseWriter, r *http.Req
 	if err := session.Save(r, w); err != nil {
 		slog.Error("Error saving session", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -172,6 +183,7 @@ func (cAuth CookieAuthenticator) logout(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		slog.Error("Error getting session", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -179,6 +191,7 @@ func (cAuth CookieAuthenticator) logout(w http.ResponseWriter, r *http.Request) 
 	if err := session.Save(r, w); err != nil {
 		slog.Error("Error saving session", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -190,13 +203,15 @@ func (cAuth CookieAuthenticator) isAuthenticated(r *http.Request) bool {
 	session, err := cAuth.store.Get(r, cAuth.cookieName)
 	if err != nil {
 		slog.Error("Error getting session", "error", err)
+
 		return false
 	}
 
 	username, ok := session.Values["username"].(string)
 	if ok && username != "" {
 		r.Header.Set("X-Forwarded-Preferred-Username", username)
-		for _, role := range session.Values["roles"].([]string) {
+		roles, _ := session.Values["roles"].([]string)
+		for _, role := range roles {
 			r.Header.Add("X-Roles", role)
 		}
 

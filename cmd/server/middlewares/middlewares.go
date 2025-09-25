@@ -16,6 +16,7 @@ func HasRole(role string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if slices.Contains(r.Header.Values("X-Roles"), role) {
 				next.ServeHTTP(w, r)
+
 				return
 			}
 			w.WriteHeader(http.StatusForbidden)

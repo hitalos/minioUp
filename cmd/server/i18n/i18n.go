@@ -19,6 +19,7 @@ func LoadTranslations() {
 	f, err := locales.Open("locales/" + defaultLocale + ".json")
 	if err != nil {
 		slog.Error("error reading translations", "error", err)
+
 		return
 	}
 	defer func() { _ = f.Close() }()

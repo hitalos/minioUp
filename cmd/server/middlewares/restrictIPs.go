@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -19,7 +18,7 @@ func RestrictIP(cidrs []string) func(next http.Handler) http.Handler {
 		}
 
 		for ip := range allowedIPs {
-			slog.Info(fmt.Sprintf("Restricting access from %s", ip))
+			slog.Info("Restricting access from " + ip)
 		}
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +28,14 @@ func RestrictIP(cidrs []string) func(next http.Handler) http.Handler {
 			for ip := range allowedIPs {
 				if ip == remoteIP {
 					next.ServeHTTP(w, r)
+
 					return
 				}
 			}
 
 			w.WriteHeader(http.StatusForbidden)
 			_, _ = w.Write([]byte("Access Forbidden"))
-			slog.Info(fmt.Sprintf("Access Forbidden for remote client %s", r.RemoteAddr))
+			slog.Info("Access Forbidden for remote client " + r.RemoteAddr)
 		})
 	}
 }

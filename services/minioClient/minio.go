@@ -26,7 +26,7 @@ func Init(cfg config.Config) error {
 	return err
 }
 
-func UploadMultiple(dest config.Destination, filepaths []string, params []map[string]string) error {
+func UploadMultiple(ctx context.Context, dest config.Destination, filepaths []string, params []map[string]string) error {
 	for idx, file := range filepaths {
 		f, err := os.Open(filepath.Clean(file))
 		if err != nil {
@@ -34,7 +34,7 @@ func UploadMultiple(dest config.Destination, filepaths []string, params []map[st
 		}
 		stat, _ := f.Stat()
 
-		if err = Upload(dest, f, file, stat.Size(), params[idx]); err != nil {
+		if err = Upload(ctx, dest, f, file, stat.Size(), params[idx]); err != nil {
 			return err
 		}
 		_ = f.Close()
@@ -43,7 +43,7 @@ func UploadMultiple(dest config.Destination, filepaths []string, params []map[st
 	return nil
 }
 
-func Upload(dest config.Destination, r io.Reader, filename string, size int64, params map[string]string) error {
+func Upload(ctx context.Context, dest config.Destination, r io.Reader, filename string, size int64, params map[string]string) error {
 	originalFilename := filepath.Base(filename)
 
 	if len(dest.AllowedTypes) > 0 {
@@ -62,7 +62,7 @@ func Upload(dest config.Destination, r io.Reader, filename string, size int64, p
 		return fmt.Errorf("invalid value for field %q: %s", k, f.Value)
 	}
 
-	if size > int64(dest.MaxUploadSize) {
+	if size > dest.MaxUploadSize {
 		return fmt.Errorf("file size exceeds the maximum allowed size of %d bytes", dest.MaxUploadSize)
 	}
 
@@ -78,18 +78,18 @@ func Upload(dest config.Destination, r io.Reader, filename string, size int64, p
 		path = filepath.Join(dest.Prefix, dest.MountName(options.UserMetadata))
 	}
 
-	_, err := client.PutObject(context.Background(), dest.Bucket, path, r, size, options)
+	_, err := client.PutObject(ctx, dest.Bucket, path, r, size, options)
 
 	return err
 }
 
-func List(dest config.Destination) ([]minio.ObjectInfo, error) {
-	if _, err := client.BucketExists(context.Background(), dest.Bucket); err != nil {
+func List(ctx context.Context, dest config.Destination) ([]minio.ObjectInfo, error) {
+	if _, err := client.BucketExists(ctx, dest.Bucket); err != nil {
 		return nil, err
 	}
 
 	opts := minio.ListObjectsOptions{Prefix: dest.Prefix, Recursive: true, WithMetadata: true}
-	objCh := client.ListObjects(context.Background(), dest.Bucket, opts)
+	objCh := client.ListObjects(ctx, dest.Bucket, opts)
 	list := make([]minio.ObjectInfo, 0)
 	for obj := range objCh {
 		list = append(list, obj)
@@ -98,6 +98,10 @@ func List(dest config.Destination) ([]minio.ObjectInfo, error) {
 	return list, nil
 }
 
-func Delete(dest config.Destination, key string) error {
-	return client.RemoveObject(context.Background(), dest.Bucket, filepath.Join(dest.Prefix, key), minio.RemoveObjectOptions{})
+func Delete(ctx context.Context, dest config.Destination, key string) error {
+	return client.RemoveObject(
+		ctx,
+		dest.Bucket,
+		filepath.Join(dest.Prefix, key),
+		minio.RemoveObjectOptions{})
 }

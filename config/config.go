@@ -93,6 +93,7 @@ func (t TemplateString) String() string {
 	buf := new(bytes.Buffer)
 	if err := t.template.Execute(buf, t.params); err != nil {
 		slog.Error("error executing template", "error", err)
+
 		return t.Value
 	}
 
@@ -109,6 +110,7 @@ func (f Field) Validate() bool {
 
 func (d Destination) MountName(params map[string]string) string {
 	d.Model.params = params
+
 	return d.Model.String()
 }
 

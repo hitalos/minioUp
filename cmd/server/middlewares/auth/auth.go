@@ -10,7 +10,7 @@ import (
 
 type (
 	Authenticator interface {
-		New(map[string]string) func(http.Handler) http.Handler
+		New(params map[string]string) func(http.Handler) http.Handler
 	}
 )
 

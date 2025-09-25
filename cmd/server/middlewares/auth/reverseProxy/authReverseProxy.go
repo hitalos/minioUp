@@ -1,7 +1,7 @@
 package reverseProxy
 
 import (
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -35,11 +35,12 @@ func (rpAuth ReverseProxyAuthenticator) New(params map[string]string) func(http.
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/auth/logout" {
 				http.Redirect(w, r, urlPrefix+"/oauth2/sign_out", http.StatusTemporaryRedirect)
+
 				return
 			}
 
 			if r.Header.Get(rpAuth.header) == "" && r.Header.Get("X-Forwarded-Preferred-Username") == "" {
-				err := fmt.Errorf("missing header")
+				err := errors.New("missing header")
 				slog.Error("Authorization error", "error", err)
 				w.WriteHeader(http.StatusForbidden)
 
@@ -50,7 +51,7 @@ func (rpAuth ReverseProxyAuthenticator) New(params map[string]string) func(http.
 				return
 			}
 
-			rolePrefix := fmt.Sprintf("role:%s:", clientID)
+			rolePrefix := "role:" + clientID + ":"
 			for _, v := range strings.Split(r.Header.Get(rpAuth.header), ",") {
 				if len(v) < len(rolePrefix) {
 					continue

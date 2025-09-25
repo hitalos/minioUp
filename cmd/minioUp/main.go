@@ -2,10 +2,12 @@ package main
 
 import (
 	"cmp"
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/nexidian/gocliselect"
 
@@ -59,6 +61,7 @@ func main() {
 
 	if *onlyListing {
 		list(dest)
+
 		return
 	}
 
@@ -104,7 +107,7 @@ func upload(dest config.Destination) {
 	}
 
 	fmt.Println("Uploading files…")
-	if err := minioClient.Upload(dest, f, filename, info.Size(), params); err != nil {
+	if err := minioClient.Upload(context.Background(), dest, f, filename, info.Size(), params); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -115,7 +118,7 @@ func upload(dest config.Destination) {
 func list(dest config.Destination) {
 	fmt.Println("Listing bucket/prefix content…")
 
-	list, err := minioClient.List(dest)
+	list, err := minioClient.List(context.Background(), dest)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -128,15 +131,16 @@ func list(dest config.Destination) {
 
 func isTerminal(f *os.File) bool {
 	o, _ := f.Stat()
+
 	return (o.Mode() & os.ModeCharDevice) == os.ModeCharDevice
 }
 
 func chooseDestination(destinations []config.Destination) uint8 {
 	menu := gocliselect.NewMenu("Choose a destination")
 	for i, d := range destinations {
-		menu.AddItem(cmp.Or(d.Name, d.Bucket), fmt.Sprintf("%d", i))
+		menu.AddItem(cmp.Or(d.Name, d.Bucket), strconv.Itoa(i))
 	}
-	menu.AddItem("Cancel", fmt.Sprintf("%d", len(destinations)))
+	menu.AddItem("Cancel", strconv.Itoa(len(destinations)))
 
 	menu.Display()
 

@@ -154,6 +154,7 @@ func reloadConfig(reloadCh chan os.Signal, cfg *config.Config, configFile string
 		if err := cfg.ReloadDestinations(configFile); err != nil {
 			slog.Error("error reloading config", "error", err)
 			time.Sleep(10 * time.Second)
+
 			continue
 		}
 
