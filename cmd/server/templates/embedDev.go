@@ -5,21 +5,21 @@ package templates
 import (
 	"html/template"
 	"io"
+	"os"
 
 	"github.com/Masterminds/sprig/v3"
 )
 
 func parseTemplates() (*template.Template, error) {
-	var err error
+	var (
+		err error
+		fs  = os.DirFS("./cmd/server/templates")
+	)
+
 	tmpls := template.New("").
 		Funcs(sprig.FuncMap()).
 		Funcs(funcs)
-	tmpls, err = tmpls.ParseGlob("cmd/server/templates/*.html")
-	if err != nil {
-		return nil, err
-	}
-
-	tmpls, err = tmpls.ParseGlob("cmd/server/templates/*/*.html")
+	tmpls, err = tmpls.ParseFS(fs, "*.html", "*/*.html")
 	if err != nil {
 		return nil, err
 	}
