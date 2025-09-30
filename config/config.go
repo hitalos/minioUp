@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -38,12 +39,23 @@ type (
 		AllowedHosts []string      `yaml:"allowedHosts,omitempty" json:"allowedHosts,omitempty" validate:"dive,hostname_port|hostname"`
 		URLPrefix    string        `yaml:"urlPrefix,omitempty" json:"urlPrefix,omitempty"`
 		Auth         Auth          `yaml:"auth" json:"auth"`
+		SMTPconfig   *SMTPConfig   `yaml:"smtpConfig,omitempty" json:"smtpConfig,omitempty"`
 	}
 
 	Auth struct {
 		Driver string            `yaml:"driver" json:"driver"`
 		Params map[string]string `yaml:"params" json:"params"`
 	}
+
+	SMTPConfig struct {
+		Host     string `yaml:"host" json:"host" validate:"required,hostname"`
+		Port     int    `yaml:"port" json:"port" validate:"required,min=1,max=65535"`
+		User     string `yaml:"user,omitempty" json:"user,omitempty"`
+		Pass     string `yaml:"pass,omitempty" json:"pass,omitempty"`
+		From     string `yaml:"from" json:"from" validate:"required,email"`
+		IsSecure bool   `yaml:"tls,omitempty" json:"tls,omitempty"`
+	}
+
 	Destination struct {
 		Name            string           `yaml:"name" json:"name" validate:"required"`
 		Bucket          string           `yaml:"bucket" json:"bucket" validate:"required"`
@@ -52,6 +64,8 @@ type (
 		AllowedTypes    []string         `yaml:"allowedTypes,omitempty" json:"allowedTypes,omitempty"`
 		Fields          map[string]Field `yaml:"fields,omitempty" json:"fields,omitempty" validate:"dive"`
 		WebHook         *WebHook         `yaml:"webhook,omitempty" json:"webhook,omitempty"`
+		NotifyEmails    []string         `yaml:"notifyEmails,omitempty" json:"notifyEmails,omitempty" validate:"dive,email,required_with=NotifyTemplate"`
+		NotifyTemplate  *TemplateString  `yaml:"notifyTemplate,omitempty" json:"notifyTemplate,omitempty" validate:"required_with=NotifyEmails"`
 		Model           *TemplateString  `yaml:"model,omitempty" json:"model,omitempty"`
 		MaxResultLength int              `yaml:"maxResultLength,omitempty" json:"maxResultLength,omitempty" validate:"min=1,max=1000"`
 		MaxUploadSize   int64            `yaml:"maxUploadSize,omitempty" json:"maxUploadSize,omitempty" validate:"min=1024"`
@@ -68,7 +82,7 @@ type (
 	}
 
 	TemplateString struct {
-		params   any
+		Params   any `yaml:"-" json:"-"`
 		template *template.Template
 		Value    string `yaml:"value" json:"value" validate:"required"`
 	}
@@ -91,7 +105,7 @@ func (t *TemplateString) UnmarshalYAML(v *yaml.Node) error {
 
 func (t TemplateString) String() string {
 	buf := new(bytes.Buffer)
-	if err := t.template.Execute(buf, t.params); err != nil {
+	if err := t.template.Execute(buf, t.Params); err != nil {
 		slog.Error("error executing template", "error", err)
 
 		return t.Value
@@ -109,12 +123,12 @@ func (f Field) Validate() bool {
 }
 
 func (d Destination) MountName(params map[string]string) string {
-	d.Model.params = params
+	d.Model.Params = params
 
 	return d.Model.String()
 }
 
-func (c *Config) Load(configFile string) error {
+func (c *Config) load(configFile string) error {
 	ext := filepath.Ext(configFile)
 	if ext != ".yml" && ext != ".yaml" {
 		return ErrWrongFileExt
@@ -126,7 +140,7 @@ func (c *Config) Load(configFile string) error {
 	}
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
-		return errors.New(`error decoding config: "` + err.Error() + `"`)
+		return fmt.Errorf("error decoding config: %w", err)
 	}
 
 	if c.Port == "" {
@@ -151,7 +165,7 @@ func (c *Config) Load(configFile string) error {
 }
 
 func (c *Config) Parse(configFile string) error {
-	if err := c.Load(configFile); err != nil {
+	if err := c.load(configFile); err != nil {
 		return err
 	}
 

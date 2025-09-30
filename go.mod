@@ -7,6 +7,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gorilla/sessions v1.4.0
+	github.com/hitalos/sendEmail v0.0.0-20250930224748-349c08ae5bcd
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/nexidian/gocliselect v1.0.0
 	github.com/prometheus/client_golang v1.23.2
@@ -47,7 +48,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tinylib/msgp v1.4.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect

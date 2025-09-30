@@ -14,6 +14,7 @@ import (
 	"github.com/hitalos/minioUp/cmd/server/templates"
 	"github.com/hitalos/minioUp/config"
 	"github.com/hitalos/minioUp/services/minioClient"
+	"github.com/hitalos/minioUp/services/smtpClient"
 )
 
 type (
@@ -179,6 +180,15 @@ func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 				slog.Error("Error sending webhook", "error", err, "webhook", dest.WebHook)
 			}
 		}
+
+		if len(dest.NotifyEmails) != 0 {
+			for _, email := range dest.NotifyEmails {
+				subject := fmt.Sprintf("New file uploaded at %q", dest.Bucket)
+				if err := smtpClient.SendMail(r.Context(), email, subject, *dest.NotifyTemplate, params, *cfg.SMTPconfig); err != nil {
+					slog.Error("Error sending notification email", "error", err, "email", email)
+				}
+			}
+		}
 	}
 }
 
@@ -205,6 +215,19 @@ func Delete(cfg *config.Config) http.HandlerFunc {
 		if dest.WebHook != nil {
 			if err := hitWebHook(r.Context(), dest); err != nil {
 				slog.Error("Error sending webhook", "error", err, "webhook", dest.WebHook)
+			}
+		}
+
+		if len(dest.NotifyEmails) != 0 {
+			for _, email := range dest.NotifyEmails {
+				subject := fmt.Sprintf("File Deleted at %q", dest.Bucket)
+				params := map[string]string{
+					"filename":  filename,
+					"deletedBy": r.Header.Get("X-Forwarded-Preferred-Username"),
+				}
+				if err := smtpClient.SendMail(r.Context(), email, subject, *dest.NotifyTemplate, params, *cfg.SMTPconfig); err != nil {
+					slog.Error("Error sending notification email", "error", err, "email", email)
+				}
 			}
 		}
 	}

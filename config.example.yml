@@ -6,6 +6,14 @@ secretKey: "************"
 allowHosts: ["localhost:8000", "127.0.0.1:8000"]
 urlPrefix: /url-prefix  # optional
 
+smtpConfig:  # optional, if not set, email notifications will be disabled
+  host: smtp.your-email.com
+  port: 465
+  tls: true  # optional, default is false
+  user: your-smtp-username  # optional, if not set, no authentication will be used
+  pass: your-smtp-password  # optional
+  from: johndoe@fulano.com
+
 auth:
   driver: cookie  # options: cookie, reverseProxy
   params:
@@ -20,6 +28,13 @@ destinations:
     prefix: ""  # optional
     model: "{{ lower (index . 0) }}"
     allowedTypes: ["jpg", "png", "pdf"]
+    notifyEmails: ["user@gmail.com"]
+    notifyTemplate: |
+      {{ with .originalFilename }}Arquivo: {{ . }}<br>{{ end }}
+      {{ with .filename }}Arquivo: {{ . }}<br>{{ end }}
+      {{ with .fileSize }}Tamanho: {{ . }} bytes<br>{{ end }}
+      {{ with .uploadedBy }}Usuário: {{ . }}<br>{{ end }}
+      {{ with .deletedBy }}Usuário: {{ . }}<br>{{ end }}
     fields:  # optional
       filename:
         required: true  # optional, default is false
