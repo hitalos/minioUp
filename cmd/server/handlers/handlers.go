@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -47,12 +48,8 @@ func filterDestinationsByRoles(r *http.Request, cfg *config.Config) []config.Des
 
 		toInclude := false
 		for _, role := range d.AllowedRoles {
-			for _, r := range r.Header.Values("X-Roles") {
-				if r == role {
-					toInclude = true
-
-					break
-				}
+			if slices.Contains(r.Header.Values("X-Roles"), role) {
+				toInclude = true
 			}
 		}
 
@@ -68,10 +65,9 @@ func Index(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dests := filterDestinationsByRoles(r, cfg)
 		if len(dests) > 1 {
-			d := map[string]any{
-				"Destinations": dests,
-				"Auth":         map[string]string{"Username": r.Header.Get("X-Forwarded-Preferred-Username")},
-			}
+			d := pageData(r)
+			d["Destinations"] = dests
+
 			if err := templates.Exec(w, "index.html", d); err != nil {
 				ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
 			}
@@ -94,36 +90,30 @@ func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 
 		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
-		type (
-			data struct {
-				Auth           map[string]string
-				Endpoint       string
-				Secure         bool
-				Destination    config.Destination
-				DestinationIdx int
-				List           fileInfoList
-			}
-		)
-		username := r.Header.Get("X-Forwarded-Preferred-Username")
-		d := data{map[string]string{"Username": username}, cfg.Endpoint, cfg.Secure, dest, destIdx, make(fileInfoList, 0)}
+		d := pageData(r)
+		d["Endpoint"] = cfg.Endpoint
+		d["Secure"] = cfg.Secure
+		d["Destination"] = dest
+		d["DestinationIdx"] = destIdx
 
-		list, err := minioClient.List(r.Context(), dest)
+		minioList, err := minioClient.List(r.Context(), dest)
 		if err != nil {
 			ErrorHandler("Error getting file list", err, w, http.StatusInternalServerError)
 
 			return
 		}
 
-		for _, obj := range list {
-			d.List = append(d.List, fileInfo{
+		list := make(fileInfoList, 0)
+		for _, obj := range minioList {
+			list = append(list, fileInfo{
 				filepath.Base(obj.Key),
 				obj.Size,
 				obj.LastModified,
 				map[string]string(obj.UserMetadata)})
 		}
 
-		sort.Sort(d.List)
-		d.List = d.List[0:min(dest.MaxResultLength, len(d.List))]
+		sort.Sort(list)
+		d["List"] = list[0:min(dest.MaxResultLength, len(list))]
 
 		if err := templates.Exec(w, "form.html", d); err != nil {
 			ErrorHandler("Error executing template", err, w, http.StatusInternalServerError)
@@ -286,31 +276,4 @@ func hitWebHook(ctx context.Context, dest config.Destination) error {
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("OK"))
-}
-
-func ShowConfig(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Accept") == "application/json" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(cfg.ToJSON()))
-
-			return
-		}
-		w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
-		_, _ = w.Write([]byte(cfg.String()))
-	}
-}
-
-func ReloadConfig(cfg *config.Config, configFile string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := cfg.ReloadDestinations(configFile); err != nil {
-			ErrorHandler("Error reloading config", err, w, http.StatusBadRequest)
-
-			return
-		}
-
-		slog.Info("config destinations reloaded", "method", "request")
-
-		ShowConfig(cfg)(w, r)
-	}
 }

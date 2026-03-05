@@ -4,7 +4,7 @@
 	<form class="index" action="{{ urlPrefix }}/form" method="POST">
 		<select name="destination" id="destination" required>
 			<option></option>
-			{{ range $idx, $dest:= .Destinations }}
+			{{ range $idx, $dest:= .Destinations -}}
 			<option value="{{ $idx }}">{{ $dest.Name }}</option>
 			{{ end }}
 		</select>

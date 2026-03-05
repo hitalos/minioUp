@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sync"
 	"text/template"
 
@@ -177,10 +178,8 @@ func (c *Config) Parse(configFile string) error {
 
 	names := []string{}
 	for i, d := range c.Destinations {
-		for _, name := range names {
-			if name == d.Name {
-				return errors.New("duplicate destination name: " + d.Name)
-			}
+		if slices.Contains(names, d.Name) {
+			return errors.New("duplicate destination name: " + d.Name)
 		}
 		names = append(names, d.Name)
 

@@ -35,10 +35,16 @@ header {
 	justify-content: space-between;
 	margin-bottom: 1rem;
 	padding: 1rem;
-}
 
-header a {
-	color: navy;
+	nav ul {
+		display: flex;
+		gap: 1rem;
+		list-style-type: none;
+	}
+
+	a {
+		color: navy;
+	}
 }
 
 main {

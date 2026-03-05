@@ -9,5 +9,17 @@
 <body>
 	<header>
 		<h1>MinioUp</h1>
-		{{ with .Auth }}<a href="{{ urlPrefix }}/auth/logout">{{ i18n "Logout" }} ({{ .Username }})</a>{{ end }}
+		{{- with .Auth }}
+		<nav>
+			<ul>
+				{{ if ne $.CurrentPage "/" -}}
+				<li><a href="/">Início</a></li>
+				{{ end -}}
+				{{ if and .IsAdmin (ne $.CurrentPage "/admin") -}}
+					<li><a href="{{ urlPrefix }}/admin">Admin</a></li>
+				{{ end -}}
+				<li><a href="{{ urlPrefix }}/auth/logout">{{ i18n "Logout" }} ({{ .Username }})</a></li>
+			</ul>
+		</nav>
+		{{- end }}
 	</header>

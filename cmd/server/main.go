@@ -106,11 +106,12 @@ func setRoutes(r *chi.Mux, cfg *config.Config) {
 			r.Post("/upload", handlers.ProcessUploadForm(cfg))
 			r.Post("/delete/{destIdx}/{filename}", handlers.Delete(cfg))
 
-			r.Route("/config", func(r chi.Router) {
+			r.Route("/admin", func(r chi.Router) {
 				r.Use(middlewares.HasRole("admin"))
 
-				r.Get("/", handlers.ShowConfig(cfg))
-				r.Get("/reload", handlers.ReloadConfig(cfg, *configFile))
+				r.Get("/", handlers.Admin(cfg))
+				r.Get("/config", handlers.ShowConfig(cfg))
+				r.Get("/config/reload", handlers.ReloadConfig(cfg, *configFile))
 			})
 		})
 

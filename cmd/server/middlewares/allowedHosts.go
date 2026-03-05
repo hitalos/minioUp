@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 )
 
 func AllowedHosts(hosts ...string) func(http.Handler) http.Handler {
@@ -25,13 +26,12 @@ func AllowedHosts(hosts ...string) func(http.Handler) http.Handler {
 				return
 			}
 
-			for _, host := range hosts {
-				if r.Host == host {
-					next.ServeHTTP(w, r)
+			if slices.Contains(hosts, r.Host) {
+				next.ServeHTTP(w, r)
 
-					return
-				}
+				return
 			}
+
 			w.WriteHeader(http.StatusForbidden)
 		})
 	}

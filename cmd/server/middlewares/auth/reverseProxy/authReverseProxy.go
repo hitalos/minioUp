@@ -52,7 +52,7 @@ func (rpAuth ReverseProxyAuthenticator) New(params map[string]string) func(http.
 			}
 
 			rolePrefix := "role:" + clientID + ":"
-			for _, v := range strings.Split(r.Header.Get(rpAuth.header), ",") {
+			for v := range strings.SplitSeq(r.Header.Get(rpAuth.header), ",") {
 				if len(v) < len(rolePrefix) {
 					continue
 				}
