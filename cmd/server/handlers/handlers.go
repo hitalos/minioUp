@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -103,10 +102,15 @@ func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
+		prefixLen := len(dest.Prefix)
+		if prefixLen > 0 {
+			prefixLen++
+		}
+
 		list := make(fileInfoList, 0)
 		for _, obj := range minioList {
 			list = append(list, fileInfo{
-				filepath.Base(obj.Key),
+				obj.Key[prefixLen:],
 				obj.Size,
 				obj.LastModified,
 				map[string]string(obj.UserMetadata)})
