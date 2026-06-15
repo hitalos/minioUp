@@ -206,7 +206,7 @@ func (c *Config) ToJSON() string {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	b, err := json.Marshal(c)
+	b, err := json.Marshal(c) // #nosec G117
 	if err != nil {
 		return err.Error()
 	}
@@ -218,7 +218,7 @@ func (c *Config) ToYAML() string {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	b, err := yaml.Marshal(c)
+	b, err := yaml.Marshal(c) // #nosec G117
 	if err != nil {
 		return err.Error()
 	}

@@ -123,7 +123,7 @@ func setRoutes(r *chi.Mux, cfg *config.Config) {
 }
 
 func setDefaultMiddlewares(r chi.Router, cfg *config.Config) {
-	r.Use(middleware.RealIP)
+	r.Use(middleware.ClientIPFromHeader("X-Forwarded-For"))
 	r.Use(middleware.Compress(6))
 	r.Use(middleware.Logger)
 	r.Use(middlewares.AllowedHosts(cfg.AllowedHosts...))

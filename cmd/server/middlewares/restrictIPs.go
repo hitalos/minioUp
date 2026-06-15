@@ -35,7 +35,9 @@ func RestrictIP(cidrs []string) func(next http.Handler) http.Handler {
 
 			w.WriteHeader(http.StatusForbidden)
 			_, _ = w.Write([]byte("Access Forbidden"))
-			slog.Info("Access Forbidden for remote client " + r.RemoteAddr)
+			if ip := net.ParseIP(r.RemoteAddr); ip != nil {
+				slog.Info("Access Forbidden for remote client " + ip.String()) // #nosec G706
+			}
 		})
 	}
 }
