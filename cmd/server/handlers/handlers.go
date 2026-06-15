@@ -112,7 +112,7 @@ func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 			list = append(list, fileInfo{
 				obj.Key[prefixLen:],
 				obj.Size,
-				obj.LastModified,
+				obj.LastModified.Local(),
 				map[string]string(obj.UserMetadata)})
 		}
 

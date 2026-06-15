@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
 FROM docker.io/library/alpine:3.24
 
 WORKDIR /app
-RUN apk --no-cache add libcrypto3=3.5.7-r0 libssl3=3.5.7-r0 tzdata=2026b-r0
+RUN apk --no-cache add libcrypto3=3.5.7-r0 libssl3=3.5.7-r0
 COPY --from=builder /app/dist/minioUpServer ./
 
 ENTRYPOINT ["/app/minioUpServer"]
