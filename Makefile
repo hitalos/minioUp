@@ -33,6 +33,7 @@ minio-server:
 		docker.io/minio/minio server /data --console-address ":9001" --sftp="address=:9022" --sftp="ssh-private-key=/data/id_rsa"
 
 lint:
+	go fix --diff ./...
 	golangci-lint run ./...
 
 sec:
