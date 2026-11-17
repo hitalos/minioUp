@@ -47,7 +47,7 @@
 			{{ range . }}
 			<tr>
 				<td{{ with .Metadata }} title="{{ range $k, $v := . }}&#10;{{ $k }}: {{ $v }}{{ end }}"{{ end }}>
-						{{- $link := printf ($.Secure | ternary "https://%s" "http://%s") ((list $.Endpoint $.Destination.Bucket $.Destination.Prefix .Name) | join "/") }}
+						{{- $link := ((list $.Endpoint $.Destination.Bucket $.Destination.Prefix .Name) | join "/") }}
 						<a href="{{ $link }}">{{ .Name }}</a>
 					</td>
 					<td>{{ humanize .Size }}</td>

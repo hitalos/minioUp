@@ -32,8 +32,10 @@ var (
 type (
 	Config struct {
 		Port         string        `yaml:"port" json:"port" validate:"required,hostname_port"`
-		Endpoint     string        `yaml:"endpoint" json:"endpoint" validate:"required,hostname|hostname_port"`
+		Endpoint     string        `yaml:"endpoint" json:"endpoint" validate:"required"`
 		Secure       bool          `yaml:"secure" json:"secure"`
+		PathStyle    bool          `yaml:"pathStyle" json:"pathStyle" validate:"required"`
+		Region       string        `yaml:"region" json:"region"`
 		AccessKey    string        `yaml:"accessKey" json:"accessKey" validate:"required"`
 		SecretKey    string        `yaml:"secretKey" json:"secretKey" validate:"required"`
 		Destinations []Destination `yaml:"destinations" json:"destinations" validate:"required,dive"`

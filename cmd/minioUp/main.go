@@ -12,7 +12,7 @@ import (
 	"github.com/nexidian/gocliselect"
 
 	"github.com/hitalos/minioUp/config"
-	"github.com/hitalos/minioUp/services/minioClient"
+	"github.com/hitalos/minioUp/services/s3Client"
 )
 
 var (
@@ -54,7 +54,7 @@ func main() {
 		dest = cfg.Destinations[destIdx]
 	}
 
-	if err := minioClient.Init(cfg); err != nil {
+	if err := s3Client.Init(cfg); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -107,7 +107,7 @@ func upload(dest config.Destination) {
 	}
 
 	fmt.Println("Uploading files…")
-	if err := minioClient.Upload(context.Background(), dest, f, filename, info.Size(), params); err != nil {
+	if err := s3Client.Upload(context.Background(), dest, f, filename, info.Size(), params); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -118,14 +118,14 @@ func upload(dest config.Destination) {
 func list(dest config.Destination) {
 	fmt.Println("Listing bucket/prefix content…")
 
-	list, err := minioClient.List(context.Background(), dest)
+	list, err := s3Client.List(context.Background(), dest)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	for _, obj := range list {
-		fmt.Printf("%s\t%d\n", obj.Key[len(dest.Prefix)+1:], obj.Size)
+		fmt.Printf("%s\t%d\n", (obj.Name)[len(dest.Prefix)+1:], obj.Size)
 	}
 }
 

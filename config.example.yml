@@ -1,6 +1,8 @@
 port: ":9000"  # optional
-endpoint: localhost:9000
+endpoint: "http://localhost:9000"
 secure: false  # optional
+pathStyle: true
+region: us-east-1
 accessKey: minio
 secretKey: "************"
 allowHosts: ["localhost:8000", "127.0.0.1:8000"]

@@ -9,28 +9,12 @@ import (
 	"slices"
 	"sort"
 	"strconv"
-	"time"
 
 	"github.com/hitalos/minioUp/cmd/server/templates"
 	"github.com/hitalos/minioUp/config"
-	"github.com/hitalos/minioUp/services/minioClient"
+	"github.com/hitalos/minioUp/services/s3Client"
 	"github.com/hitalos/minioUp/services/smtpClient"
 )
-
-type (
-	fileInfo struct {
-		Name     string
-		Size     int64
-		LastMod  time.Time
-		Metadata map[string]string
-	}
-
-	fileInfoList []fileInfo
-)
-
-func (il fileInfoList) Len() int           { return len(il) }
-func (il fileInfoList) Swap(i, j int)      { il[i], il[j] = il[j], il[i] }
-func (il fileInfoList) Less(i, j int) bool { return il[i].LastMod.Unix() > il[j].LastMod.Unix() }
 
 func filterDestinationsByRoles(r *http.Request, cfg *config.Config) []config.Destination {
 	if cfg.Auth.Driver == "" {
@@ -95,25 +79,11 @@ func ShowUploadForm(cfg *config.Config) http.HandlerFunc {
 		d["Destination"] = dest
 		d["DestinationIdx"] = destIdx
 
-		minioList, err := minioClient.List(r.Context(), dest)
+		list, err := s3Client.List(r.Context(), dest)
 		if err != nil {
 			ErrorHandler("Error getting file list", err, w, http.StatusInternalServerError)
 
 			return
-		}
-
-		prefixLen := len(dest.Prefix)
-		if prefixLen > 0 {
-			prefixLen++
-		}
-
-		list := make(fileInfoList, 0)
-		for _, obj := range minioList {
-			list = append(list, fileInfo{
-				obj.Key[prefixLen:],
-				obj.Size,
-				obj.LastModified.Local(),
-				map[string]string(obj.UserMetadata)})
 		}
 
 		sort.Sort(list)
@@ -159,7 +129,7 @@ func ProcessUploadForm(cfg *config.Config) http.HandlerFunc {
 			params["uploadedBy"] = username
 		}
 
-		if err := minioClient.Upload(r.Context(), dest, file, fh.Filename, fh.Size, params); err != nil {
+		if err := s3Client.Upload(r.Context(), dest, file, fh.Filename, fh.Size, params); err != nil {
 			ErrorHandler("Error uploading file", err, w, http.StatusInternalServerError)
 
 			return
@@ -197,7 +167,7 @@ func Delete(cfg *config.Config) http.HandlerFunc {
 		dest := filterDestinationsByRoles(r, cfg)[destIdx]
 
 		filename, _ := url.PathUnescape(r.PathValue("filename"))
-		if err := minioClient.Delete(r.Context(), dest, filename); err != nil {
+		if err := s3Client.Delete(r.Context(), dest, filename); err != nil {
 			ErrorHandler("Error deleting file", err, w, http.StatusInternalServerError)
 
 			return

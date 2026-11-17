@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.27.3-alpine as builder
+FROM docker.io/library/golang:1.27.4-alpine as builder
 
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 go build -ldflags '-s -w' -o ./dist/minioUpServer ./cmd/server
 FROM docker.io/library/alpine:3.24
 
 WORKDIR /app
-RUN apk --no-cache add libcrypto3=3.5.9-r0 libssl3=3.5.9-r0
+RUN apk --no-cache add libcrypto3=3.5.9-r0 libssl3=3.5.9-r0 zlib=1.4-r0
 COPY --from=builder /app/dist/minioUpServer ./
 
 ENTRYPOINT ["/app/minioUpServer"]

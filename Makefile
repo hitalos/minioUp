@@ -15,14 +15,14 @@ install:
 clean:
 	rm -rf ./dist
 
-CONTAINER_RUNTINE=$(shell [ -e /usr/bin/podman ] && echo podman || echo docker)
+CONTAINER_RUNTIME=$(shell [ -e /usr/bin/podman ] && echo podman || echo docker)
 minio-server:
-	@echo "Creating minio volumes if not exists…"
-	$(CONTAINER_RUNTINE) volume create --ignore minio-data
+	@echo "Creating volumes if not exists…"
+	$(CONTAINER_RUNTIME) volume create --ignore minio-data
 	@echo "Creating a ssh key on volume…"
-	$(eval DATADIR=$(shell $(CONTAINER_RUNTINE) volume inspect minio-data | grep Mountpoint | sed -e 's/^.*: //g' -e 's/[\b",]//g'))
+	$(eval DATADIR=$(shell $(CONTAINER_RUNTIME) volume inspect minio-data | grep Mountpoint | sed -e 's/^.*: //g' -e 's/[\b",]//g'))
 	ssh-keygen -f $(DATADIR)/id_rsa -N '' -t rsa
-	$(CONTAINER_RUNTINE) run -d \
+	$(CONTAINER_RUNTIME) run -d \
 		--name minio \
 		-v minio-data:/data \
 		-p 9000:9000 \
@@ -42,12 +42,12 @@ sec:
 	trivy fs .
 	grype . --add-cpes-if-none
 
-CONTAINER_RUNTINE=$(shell [ -e /usr/bin/podman ] && echo podman || echo docker)
+CONTAINER_RUNTIME=$(shell [ -e /usr/bin/buildah ] && echo buildah || echo docker)
 container-image:
-	$(CONTAINER_RUNTINE) image build -t docker.io/$(USER)/minioup:latest .
+	$(CONTAINER_RUNTIME) build -t docker.io/$(USER)/minioup:latest .
 
 container-image-push:
-	$(CONTAINER_RUNTINE) image push docker.io/$(USER)/minioup:latest
+	$(CONTAINER_RUNTIME) push docker.io/$(USER)/minioup:latest
 
 container-image-sec:
 	trivy image docker.io/$(USER)/minioup:latest

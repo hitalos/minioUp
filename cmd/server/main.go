@@ -24,7 +24,7 @@ import (
 	"github.com/hitalos/minioUp/cmd/server/public"
 	"github.com/hitalos/minioUp/cmd/server/templates"
 	"github.com/hitalos/minioUp/config"
-	"github.com/hitalos/minioUp/services/minioClient"
+	"github.com/hitalos/minioUp/services/s3Client"
 )
 
 var (
@@ -53,8 +53,8 @@ func main() {
 	i18n.LoadTranslations()
 	templates.SetURLPrefix(cfg.URLPrefix)
 
-	if err := minioClient.Init(*cfg); err != nil {
-		slog.Error("error on initialize minio client", "error", err)
+	if err := s3Client.Init(*cfg); err != nil {
+		slog.Error("error on initialize s3 client", "error", err)
 		os.Exit(1)
 	}
 

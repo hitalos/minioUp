@@ -54,7 +54,7 @@ func smtpConnect(ctx context.Context, cfg config.SMTPConfig) (*smtp.Client, erro
 			return nil, err
 		}
 
-		tlsconfig.InsecureSkipVerify = true
+		tlsconfig.InsecureSkipVerify = !cfg.IsSecure // #nosec G402
 		if err := smtpClient.StartTLS(tlsconfig); err != nil {
 			return nil, err
 		}
